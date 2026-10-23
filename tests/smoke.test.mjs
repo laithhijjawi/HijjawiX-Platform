@@ -15,7 +15,7 @@ test('Portal links match provided static assets', () => {
 });
 test('Portal contains two public apps, seven categories and bilingual UI', () => {
   const app=read('public/app.js');
-  for(const appName of ['ayah-lak','fold-and-fire-online']) assert.ok(app.includes(appName),appName);
+  for(const appName of ['ayahlak.hijjawix.com','fold-and-fire-online']) assert.ok(app.includes(appName),appName);
   for(const category of ['islamic','engineering','math','entertainment','education','utilities','health']) assert.ok(app.includes("id:'"+category+"'"),category);
   assert.ok(app.includes("ar:{navHome:"));
   assert.ok(app.includes("en:{navHome:"));
