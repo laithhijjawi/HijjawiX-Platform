@@ -603,3 +603,12 @@ body.category-view-active main > :not(.category-route){display:none!important}
  .route-empty h3{font-size:16px}
  .route-empty p{font-size:12px}
 }
+
+/* Prevent decorative ambient layers from expanding smartphone layout. */
+@media(max-width:820px){
+  .ambient{width:min(240px,60vw)!important;height:260px!important;opacity:.25;filter:blur(44px)}
+  .ambient-one{right:-80px!important;left:auto!important}
+  .ambient-two{left:-80px!important;right:auto!important}
+  .featured-art{overflow:hidden}
+  .featured-orbit{max-width:100%;pointer-events:none}
+}
