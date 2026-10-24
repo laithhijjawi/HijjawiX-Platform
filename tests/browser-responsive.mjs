@@ -36,6 +36,15 @@ try{
       return {viewport:window.innerWidth,htmlWidth:document.documentElement.scrollWidth,bodyWidth:document.body.scrollWidth,hero:r('.hero'),header:r('.site-header'),brand:r('.brand'),menu:r('.mobile-menu-toggle'),category:r('.category-card'),gridCols:getComputedStyle(document.querySelector('.category-grid')).gridTemplateColumns};
     });
     console.log('INITIAL '+width+'px '+JSON.stringify(start));
+    if(start.htmlWidth>width+2){
+      const offenders=await page.evaluate(()=>{
+        return [...document.querySelectorAll('*')].map(el=>{
+          const r=el.getBoundingClientRect();const s=getComputedStyle(el);
+          return {selector:el.tagName.toLowerCase()+(el.id?'#'+el.id:'')+(typeof el.className==='string'?'.'+el.className.trim().replace(/\s+/g,'.'):''),left:Math.round(r.left),right:Math.round(r.right),width:Math.round(r.width),scroll:el.scrollWidth,overflowX:s.overflowX,position:s.position};
+        }).filter(x=>x.right>innerWidth+3||x.left< -3).sort((a,b)=>b.right-a.right).slice(0,18);
+      });
+      console.log('HORIZONTAL_OFFENDERS '+width+'px '+JSON.stringify(offenders));
+    }
     assert.equal(start.viewport,width,'Unexpected viewport width');
     assert.ok(start.htmlWidth<=width+2,'Document horizontally overflows at '+width+'px: '+start.htmlWidth);
     assert.ok(start.category&&start.category.left>=-2&&start.category.right<=width+2,'Category card offscreen at '+width+'px');
