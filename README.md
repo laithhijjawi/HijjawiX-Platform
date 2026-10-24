@@ -37,3 +37,7 @@ npm run dev
 
 ## الخصوصية
 الموقع لا يتطلب مفاتيح API أو بيانات دخول. لا تضع أسرار Cloudflare أو Google داخل المستودع. تغيير إعدادات DNS والنشر يتم من حسابك في Cloudflare.
+
+## Post-reconnection verification (2026-10-24)
+
+After restoring the Cloudflare GitHub integration, this documentation update intentionally triggers a fresh push to the production `main` branch. Confirm that Cloudflare Workers Builds deploys the latest platform files and that the live homepage includes the release marker `hijjawix-mobile-20261024-v1` in its HTML. The production Worker must remain `hijjawix-platform` and should serve `hijjawix.com`; keep other apps independent.
