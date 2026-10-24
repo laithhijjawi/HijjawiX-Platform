@@ -615,3 +615,6 @@ body.category-view-active main > :not(.category-route){display:none!important}
 
 /* Decorative glows are disabled on compact viewports to prevent intrinsic scroll overflow. */
 @media(max-width:820px){.ambient{display:none!important}}
+
+/* Keep desktop ambient decoration inside the viewport too. */
+@media(min-width:821px){.ambient-one{right:0!important}.ambient-two{left:0!important}}
