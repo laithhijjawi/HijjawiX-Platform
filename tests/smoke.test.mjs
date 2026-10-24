@@ -38,3 +38,18 @@ test('Mobile-first portal release and accessible category dialog', () => {
   assert.ok(css.includes('.category-dialog:modal'));
   assert.ok(js.includes("mobile-menu-toggle"));
 });
+
+test('Mobile category routes replace popups', () => {
+ const html=read('public/index.html');
+ const js=read('public/app.js');
+ const css=read('public/styles.css');
+ assert.ok(html.includes('id="categoryRoute"'));
+ assert.ok(html.includes('id="routeBack"'));
+ assert.ok(!html.includes('<dialog'));
+ assert.ok(!js.includes('categoryDialog'));
+ assert.ok(js.includes('function syncCategoryRoute()'));
+ assert.ok(js.includes("addEventListener('hashchange',syncCategoryRoute)"));
+ assert.ok(css.includes('body.category-view-active main > :not(.category-route)'));
+ assert.ok(css.includes('.route-empty{'));
+ assert.ok(html.includes('hijjawix-mobile-20261024-v2'));
+});
