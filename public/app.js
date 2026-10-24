@@ -14,6 +14,34 @@ ar:{navHome:'الرئيسية',navApps:'التطبيقات',navAbout:'عن ال�
 en:{navHome:'Home',navApps:'Apps',navAbout:'About',navContact:'Contact',explore:'Explore Apps',eyebrow:'WELCOME TO THE WORLD OF HIJJAWI X',heroLine1:'Inspired by ideas.',heroLine2:'Built for possibility.',heroDescription:'Where creativity meets technology. Discover Islamic, engineering, educational, mathematical and entertainment apps designed for real life.',start:'Explore the Apps',meetDeveloper:'Meet the Developer',metricAvailable:'Available Apps',metricCategories:'App Categories',metricIdeas:'Future Ideas',floatingAyah:'Ayah Lak',sceneCaption:'Independent apps. One creative universe.',featuredLabel:'GET STARTED',featuredTitle:'Worth Exploring ✳',featuredAside:'Available on the web',available:'Available now',ayahName:'Ayah Lak',ayahDescription:'Reflect on verses from the Quran by topic and mood, with easy sharing.',openApp:'Open App',fireDescription:'An interactive online strategy game. Play solo or challenge friends.',playNow:'Play Now',discoverLabel:'EXPLORE THE UNIVERSE',categoriesTitle:'Something for every passion.',categoriesDescription:'Choose your field to explore its apps. Future categories are visible even before their first release.',categories:'Categories',allCategories:'All Categories',availableNow:'Available',inDevelopment:'In Development',noResultsTitle:'No results found',noResultsText:'Try a different search or browse every category.',missionLabel:'FROM IDEAS TO PRODUCTS',missionTitle:'Where technology meets passion',missionText:'Hijjawi X builds and shares meaningful digital products: apps for knowledge, learning, practical work and simply having fun.',behindLabel:'BEHIND THE IDEAS',developerTitle:'Meet the Developer',developerRole:'Electrical Engineer • R&D • Digital Products',developerName:'Eng. Laith Hijjawi',developerBio:'An engineer focused on energy systems, batteries, research and development, and turning engineering ideas into practical technology. I develop tools and digital applications with usefulness, innovation and a seamless experience in mind.',skill1:'Power Engineering',skill2:'Battery Technology',skill3:'Research & Development',skill4:'App Development',contactLabel:'HAVE AN IDEA?',contactTitle:"Let's build something useful.",contactDescription:'For suggestions, collaborations and feedback about our apps, get in touch.',contactButton:'Contact the Developer',footerTagline:'Inspired by ideas. Beyond limits.',rights:'All rights reserved.',backToCategories:'← Back to Categories',appsCount:n=>n===1?'1 app':n+' apps',soon:'In development',emptyTitle:'Something new is in the works!',emptyDesc:'We are exploring ideas for this field. Follow this platform for future releases.',search:'Search apps and categories...',categoryLabel:'EXPLORE CATEGORY',launch:'Open App ↗'}};
 let lang=(()=>{try{return localStorage.getItem('hx-language')==='en'?'en':'ar'}catch{return 'ar'}})();
 let filter='all',query='';
+
+/* Phone navigation: desktop links stay accessible on compact screens. */
+const nav=document.querySelector('.nav-links');
+const navShell=document.querySelector('.nav-shell');
+const mobileMenu=document.createElement('button');
+mobileMenu.type='button';
+mobileMenu.className='mobile-menu-toggle';
+mobileMenu.setAttribute('aria-label','فتح القائمة');
+mobileMenu.setAttribute('aria-expanded','false');
+mobileMenu.setAttribute('aria-controls','mobileNavLinks');
+mobileMenu.textContent='☰';
+nav.id='mobileNavLinks';
+navShell.append(mobileMenu);
+function closeMobileMenu(){
+  nav.classList.remove('is-open');
+  mobileMenu.setAttribute('aria-expanded','false');
+  mobileMenu.textContent='☰';
+}
+mobileMenu.addEventListener('click',()=>{
+  const expanded=nav.classList.toggle('is-open');
+  mobileMenu.setAttribute('aria-expanded',String(expanded));
+  mobileMenu.textContent=expanded?'✕':'☰';
+});
+nav.addEventListener('click',e=>{if(e.target.closest('a'))closeMobileMenu()});
+document.addEventListener('click',e=>{if(!navShell.contains(e.target))closeMobileMenu()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMobileMenu()});
+window.addEventListener('resize',()=>{if(window.innerWidth>820)closeMobileMenu()});
+
 const $=id=>document.getElementById(id);
 const t=key=>dict[lang][key];
 function updateLang(){
@@ -23,6 +51,7 @@ $('langToggle').innerHTML=(lang==='ar'?'EN':'عربي')+' <span class="globe">�
 $('searchInput').placeholder=t('search');
 $('searchInput').setAttribute('aria-label',t('search'));
 document.title=lang==='ar'?'Hijjawi X | منصة تطبيقات وأفكار مبتكرة':'Hijjawi X | Creative Apps & Ideas';
+mobileMenu.setAttribute('aria-label',lang==='ar'?'فتح القائمة':'Open navigation');
 renderCategories();
 }
 function renderCategories(){
@@ -58,7 +87,11 @@ if(!dialog.open)dialog.showModal();
 $('langToggle').addEventListener('click',()=>{lang=lang==='ar'?'en':'ar';try{localStorage.setItem('hx-language',lang)}catch{}updateLang();if($('categoryDialog').open){const c=categories.find(x=>x.id===$('categoryDialog').dataset.category);if(c)openCategory(c)}});
 $('filterRow').addEventListener('click',e=>{const btn=e.target.closest('[data-filter]');if(!btn)return;filter=btn.dataset.filter;document.querySelectorAll('[data-filter]').forEach(b=>{b.classList.toggle('active',b===btn);b.setAttribute('aria-pressed',String(b===btn))});renderCategories()});
 $('searchInput').addEventListener('input',e=>{query=e.target.value.trim().toLocaleLowerCase();renderCategories()});
-$('closeDialog').addEventListener('click',()=>$('categoryDialog').close());
+const categoryModal=$('categoryDialog');
+categoryModal.addEventListener('close',()=>document.documentElement.classList.remove('dialog-open'));
+categoryModal.addEventListener('cancel',()=>document.documentElement.classList.remove('dialog-open'));
+categoryModal.addEventListener('toggle',()=>document.documentElement.classList.toggle('dialog-open',categoryModal.open));
+$('closeDialog').addEventListener('click',()=>categoryModal.close());
 $('dialogBack').addEventListener('click',()=>$('categoryDialog').close());
 $('categoryDialog').addEventListener('click',e=>{if(e.target===$('categoryDialog'))$('categoryDialog').close()});
 $('currentYear').textContent=new Date().getFullYear();
