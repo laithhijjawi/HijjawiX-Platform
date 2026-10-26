@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#08090c">
+  <meta name="description" content="Tesla Sound X — أصوات محركات افتراضية متزامنة مع سرعة السيارة عبر متصفح تسلا.">
+  <link rel="canonical" href="https://hijjawix.com/tesla-sound/">
+  <link rel="icon" type="image/svg+xml" href="/logo.svg">
+  <link rel="stylesheet" href="./style.css?v=1.0.0">
+  <title>Tesla Sound X | HIJJAWI X</title>
+</head>
+<body>
+  <div class="ambient" aria-hidden="true"></div>
+  <header class="topbar">
+    <a class="back-link" href="/" aria-label="Back to Hijjawi X"><span aria-hidden="true">↗</span><span data-t="back">المنصة الرئيسية</span></a>
+    <a class="brand" href="/"><img src="/logo.svg" alt="" width="32" height="32"><span>HIJJAWI <b>X</b></span></a>
+    <button type="button" class="language" id="languageButton" aria-label="Change language">EN</button>
+  </header>
+  <main class="shell">
+    <section class="intro">
+      <div class="eyebrow"><span class="pulse-dot"></span> TESLA SOUND X <span class="version">BETA 1.0</span></div>
+      <h1 data-t="headline">سيارتك كهربائية.<br><em>صوتها على مزاجك.</em></h1>
+      <p data-t="intro">تجربة صوت محرك رياضي تفاعلي من متصفح السيارة. اختر المحرك، جرّب التسارع، أو اربط الصوت بسرعة السيارة عبر GPS.</p>
+    </section>
+    <section class="workspace" aria-label="Engine simulator">
+      <div class="controls panel">
+        <div class="panel-title"><span class="overline">01 / THE GARAGE</span><h2 data-t="engine">اختر شخصية المحرك</h2></div>
+        <div class="engine-options" id="engineOptions" role="group" aria-label="Engine type">
+          <button class="engine-card selected" type="button" data-engine="v8" aria-pressed="true"><span class="engine-icon">V8</span><span class="engine-name">MUSCLE V8</span><small data-t="v8Desc">عميق وقوي</small></button>
+          <button class="engine-card" type="button" data-engine="v10" aria-pressed="false"><span class="engine-icon">V10</span><span class="engine-name">SUPERCAR V10</span><small data-t="v10Desc">حاد وعالي الدوران</small></button>
+          <button class="engine-card" type="button" data-engine="v12" aria-pressed="false"><span class="engine-icon">V12</span><span class="engine-name">GRAND TOURER V12</span><small data-t="v12Desc">ناعم وفاخر</small></button>
+          <button class="engine-card" type="button" data-engine="flat6" aria-pressed="false"><span class="engine-icon">F6</span><span class="engine-name">SPORT FLAT-6</span><small data-t="f6Desc">رياضي ومتجاوب</small></button>
+          <button class="engine-card" type="button" data-engine="turbo6" aria-pressed="false"><span class="engine-icon">T6</span><span class="engine-name">TURBO INLINE-6</span><small data-t="turboDesc">صفير تيربو ونقلات</small></button>
+        </div>
+        <div class="setting-group">
+          <div class="setting-title"><span class="overline">02 / DRIVE SOURCE</span><h2 data-t="driveMode">طريقة المحاكاة</h2></div>
+          <div class="mode-switch" role="group" aria-label="Driving mode">
+            <button id="demoMode" class="mode-choice active" type="button" aria-pressed="true"><strong data-t="demo">تجربة الدعسة</strong><small>DEMO</small></button>
+            <button id="gpsMode" class="mode-choice" type="button" aria-pressed="false"><strong data-t="gps">قيادة GPS</strong><small>LIVE SPEED</small></button>
+          </div>
+          <p class="mode-hint" id="modeHint" data-t="demoHint">تسارع افتراضي من أزرار الشاشة. لا يقرأ دعسة السيارة الفعلية.</p>
+        </div>
+        <div class="settings-bottom">
+          <label class="slider-head" for="volume"><span data-t="volume">مستوى صوت المحرك</span><output id="volumeValue">30%</output></label>
+          <input type="range" id="volume" min="0" max="70" value="30" step="1" aria-label="Engine volume">
+          <label class="slider-head" for="intensity"><span data-t="intensity">حدة الصوت</span><output id="intensityValue">65%</output></label>
+          <input type="range" id="intensity" min="20" max="100" value="65" step="1" aria-label="Sound intensity">
+        </div>
+      </div>
+      <div class="dashboard panel">
+        <div class="dash-header"><div><span class="overline">LIVE ENGINE SIMULATOR</span><h2 id="currentEngine">MUSCLE V8</h2></div><span id="engineStatus" class="engine-status" data-state="off"><span class="status-dot"></span><span id="engineStatusText" data-t="off">المحرك متوقف</span></span></div>
+        <div class="gauge-area">
+          <div class="gauge-wrap">
+            <svg class="gauge-art" viewBox="0 0 320 320" role="img" aria-label="Engine RPM gauge">
+              <circle cx="160" cy="160" r="132" fill="none" stroke="#1e2733" stroke-width="11" stroke-dasharray="550 280" transform="rotate(147 160 160)" stroke-linecap="round"/>
+              <circle cx="160" cy="160" r="132" fill="none" stroke="#4c5560" stroke-width="2" stroke-dasharray="3 11" transform="rotate(147 160 160)" opacity=".75"/>
+              <circle cx="160" cy="160" r="132" fill="none" stroke="#eb4b4b" stroke-width="11" stroke-dasharray="83 747" stroke-dashoffset="-468" transform="rotate(147 160 160)" stroke-linecap="round"/>
+              <g id="rpmNeedle" transform="rotate(-125 160 160)"><line x1="160" y1="170" x2="160" y2="48" stroke="#fc5b55" stroke-width="3" stroke-linecap="round"/><circle cx="160" cy="160" r="8" fill="#fc5b55"/></g>
+              <circle cx="160" cy="160" r="11" fill="#101923" stroke="#ff6761" stroke-width="2"/>
+            </svg>
+            <div class="center-digits"><span class="dash-label" data-t="rpm">دورات المحرك</span><strong id="rpmNumber">0</strong><span class="rpm-unit">RPM</span><span class="gear-display" id="gearDisplay">N</span></div>
+          </div>
+          <div class="speed-strip"><div><strong id="speedNumber">0</strong><span>km/h</span></div><div class="throttle-meter"><span data-t="throttle">الضغط الافتراضي</span><div class="bar-bg"><div id="throttleFill"></div></div><b id="throttlePercent">0%</b></div></div>
+        </div>
+        <div class="status-info"><span id="gpsQuality" class="source-chip">DEMO · OFFLINE</span><span id="feedback" class="feedback" role="status" aria-live="polite" data-t="ready">اختر الصوت ثم شغّل المحرك.</span></div>
+        <button class="start-button" id="startButton" type="button"><span class="button-symbol" id="startSymbol">▶</span><span id="startLabel" data-t="start">تشغيل المحرك</span></button>
+        <div class="demo-pedals" id="demoPedals">
+          <button class="pedal brake" id="brakePedal" type="button"><span class="pedal-icon">▤</span><strong data-t="brake">فرامل</strong><small data-t="hold">اضغط باستمرار</small></button>
+          <button class="pedal gas" id="gasPedal" type="button"><span class="pedal-icon">▥</span><strong data-t="accelerate">تسارع</strong><small data-t="hold">اضغط باستمرار</small></button>
+        </div>
+        <p class="gps-notice" id="gpsNotice" hidden data-t="gpsNotice">ضع السيارة في وضع الوقوف قبل الإعداد. عند البدء سيطلب المتصفح إذن الموقع، وسيعتمد الصوت على سرعة GPS وليس موقع دعسة التسارع مباشرةً.</p>
+      </div>
+    </section>
+    <section class="how-it-works">
+      <div class="section-kicker" data-t="how">كيف يعمل التطبيق؟</div>
+      <div class="info-grid">
+        <article><div class="info-icon">01</div><h3 data-t="step1Title">اختر الصوت</h3><p data-t="step1">خمسة أنماط مختلفة لمحركات افتراضية يتم توليد صوتها في المتصفح.</p></article>
+        <article><div class="info-icon">02</div><h3 data-t="step2Title">جرّب أو ابدأ القيادة</h3><p data-t="step2">تجربة ثابتة من أزرار الشاشة، أو متابعة السرعة الحقيقية عبر GPS أثناء القيادة.</p></article>
+        <article><div class="info-icon">03</div><h3 data-t="step3Title">استمع داخل السيارة</h3><p data-t="step3">الصوت يخرج من سماعات المقصورة مثل الموسيقى. لا يتحكم التطبيق في السيارة.</p></article>
+      </div>
+    </section>
+    <p class="safety"><span class="safety-icon">!</span><span data-t="safety">اضبط الخيارات والسيارة متوقفة. لا تلمس الشاشة أثناء القيادة. هذا تطبيق صوتي ترفيهي فقط؛ لا يغيّر التسارع أو عمل السيارة، ولا يستخدم مكبرات الصوت الخارجية.</span></p>
+  </main>
+  <footer><span>TESLA SOUND X · A HIJJAWI X EXPERIMENT</span><span data-t="notAffiliated">مشروع مستقل وغير تابع لشركة Tesla.</span></footer>
+  <script defer src="./app.js?v=1.0.0"></script>
+</body>
+</html>
