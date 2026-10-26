@@ -9,7 +9,7 @@ const root=path.resolve(fileURLToPath(new URL('../public/',import.meta.url)));
 const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json'};
 const server=createServer(async(req,res)=>{
   const url=new URL(req.url,'http://localhost');
-  const uri=url.pathname==='/'?'/index.html':url.pathname;
+  const uri=url.pathname.endsWith('/')?url.pathname+'index.html':url.pathname;
   const file=path.resolve(root,'.'+uri);
   if(!file.startsWith(root+path.sep)){res.writeHead(403);res.end();return}
   try{
