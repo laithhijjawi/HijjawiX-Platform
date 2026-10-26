@@ -114,6 +114,10 @@ try{
     await page.locator('#gpsMode').click();
     assert.ok(!(await page.locator('#demoPedals').isVisible()),'Manual pedals must hide for GPS');
     const htmlWidth=await page.evaluate(()=>document.documentElement.scrollWidth);
+    if(htmlWidth>width+2){
+      const offenders=await page.evaluate(()=>[...document.querySelectorAll('*')].map(el=>{const r=el.getBoundingClientRect();return {tag:el.tagName,id:el.id,cls:typeof el.className==='string'?el.className:'',left:Math.round(r.left),right:Math.round(r.right),width:Math.round(r.width),scroll:el.scrollWidth}}).filter(x=>x.right>innerWidth+2||x.left< -2).slice(0,25));
+      console.log('TESLA_OVERFLOW '+width+'px width='+htmlWidth+' '+JSON.stringify(offenders));
+    }
     assert.ok(htmlWidth<=width+2,'Tesla Sound page must not overflow at '+width+'px');
     await page.screenshot({path:path.join(screenshotDir,'tesla-sound-'+width+'.png'),fullPage:true});
     await page.close();
