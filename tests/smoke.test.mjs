@@ -42,3 +42,20 @@ test('Mobile category routes replace popups', () => {
  assert.ok(css.includes('.route-empty{'));
  assert.ok(html.includes('hijjawix-mobile-20261024-v2'));
 });
+
+test('Tesla Sound X assets and portal entry exist', () => {
+  for (const file of ['public/tesla-sound/index.html','public/tesla-sound/style.css','public/tesla-sound/app.js']) {
+    assert.equal(existsSync(new URL('../'+file, import.meta.url)), true, file);
+  }
+  const html=read('public/tesla-sound/index.html');
+  const js=read('public/tesla-sound/app.js');
+  const portal=read('public/app.js');
+  const headers=read('public/_headers');
+  for (const id of ['startButton','gasPedal','brakePedal','gpsMode','demoMode','rpmNumber','languageButton']) assert.ok(html.includes('id="'+id+'"'),id);
+  for (const profile of ['v8','v10','v12','flat6','turbo6']) assert.ok(js.includes(profile+':{'), profile);
+  assert.ok(js.includes('navigator.geolocation.watchPosition'));
+  assert.ok(js.includes('AudioContext'));
+  assert.ok(portal.includes("url:'/tesla-sound/'"));
+  assert.ok(headers.includes('/tesla-sound/*'));
+  assert.ok(headers.includes('geolocation=(self)'));
+});
