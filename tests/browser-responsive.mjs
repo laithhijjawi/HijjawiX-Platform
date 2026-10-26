@@ -9,7 +9,7 @@ const root=path.resolve(fileURLToPath(new URL('../public/',import.meta.url)));
 const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json'};
 const server=createServer(async(req,res)=>{
   const url=new URL(req.url,'http://localhost');
-  const uri=url.pathname==='/'?'/index.html':url.pathname;
+  const uri=url.pathname.endsWith('/')?url.pathname+'index.html':url.pathname;
   const file=path.resolve(root,'.'+uri);
   if(!file.startsWith(root+path.sep)){res.writeHead(403);res.end();return}
   try{
@@ -86,7 +86,39 @@ try{
     }
     await page.close();
   }
-  console.log('PASS: mobile and desktop responsive layout, category routes, and navigation.');
+  // Tesla Sound X: actual app layout and interactive simulation regression.
+  for (const width of [360,1280]) {
+    const page=await browser.newPage({viewport:{width,height:850},deviceScaleFactor:1});
+    await page.goto(rootUrl+'tesla-sound/',{waitUntil:'domcontentloaded'});
+    assert.ok(await page.locator('#revMode').isVisible(),'Park Rev selector must exist');
+    assert.ok(await page.locator('#driveMode').isVisible(),'Drive selector must exist');
+    assert.ok(!(await page.locator('#sourceSetting').isVisible()),'Drive inputs must hide in parked rev');
+    await page.locator('#startButton').click();
+    assert.equal((await page.locator('#gearDisplay').textContent()).trim(),'P','Park Rev must show P gear');
+    await page.locator('#gasPedal').hover();
+    await page.mouse.down();
+    await page.waitForTimeout(650);
+    const rpm=Number((await page.locator('#rpmNumber').textContent()).trim());
+    const speed=Number((await page.locator('#speedNumber').textContent()).trim());
+    await page.mouse.up();
+    assert.ok(rpm>1000,'Park Rev should change RPM with on-screen pedal: '+rpm);
+    assert.equal(speed,0,'Park Rev must not move virtual vehicle');
+    await page.locator('#driveMode').click();
+    assert.ok(await page.locator('#sourceSetting').isVisible(),'Driving source choices must show');
+    await page.locator('#gasPedal').hover();
+    await page.mouse.down();
+    await page.waitForTimeout(1100);
+    const driveSpeed=Number((await page.locator('#speedNumber').textContent()).trim());
+    await page.mouse.up();
+    assert.ok(driveSpeed>0,'Drive demo should accelerate with on-screen pedal');
+    await page.locator('#gpsMode').click();
+    assert.ok(!(await page.locator('#demoPedals').isVisible()),'Manual pedals must hide for GPS');
+    const htmlWidth=await page.evaluate(()=>document.documentElement.scrollWidth);
+    assert.ok(htmlWidth<=width+2,'Tesla Sound page must not overflow at '+width+'px');
+    await page.screenshot({path:path.join(screenshotDir,'tesla-sound-'+width+'.png'),fullPage:true});
+    await page.close();
+  }
+  console.log('PASS: mobile, desktop, category navigation and Tesla Sound X parked/driving controls.');
 }finally{
   if(browser)await browser.close();
   await new Promise(resolve=>server.close(resolve));
