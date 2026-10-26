@@ -39,7 +39,7 @@ let running=false,gas=false,brake=false,gasValue=.9;
 let rpm=0,speed=0,throttle=0,gear=1,lastTick=0,lastShift=0;
 let gpsWatch=null,gpsAt=0,gpsSpeed=0,gpsPrevious=0,gpsAcceleration=0;
 let demoActive=false,demoStarted=0;
-let audioCtx=null,master=null,processor=null,fallback=null;
+let audioCtx=null,master=null,processor=null,fallback=null,audioNode=null;
 let audioBackend='none',audioError=null;
 let lastAudioState=null;
 const t=k=>messages[lang][k]||k;
@@ -148,7 +148,7 @@ async function beginAudio(){
    await ctx.audioWorklet.addModule('./engine-worklet.js?v=physics-v3');
    const node=new AudioWorkletNode(ctx,'hijjawix-physics-engine-v3',{
      numberOfInputs:0,numberOfOutputs:1,outputChannelCount:[2]});
-   node.connect(filter);processor=node;audioBackend='worklet';
+   node.connect(filter);processor=node;audioNode=node;audioBackend='worklet';
   }catch(err){audioError=err}
  }
  if(!processor){
@@ -157,8 +157,7 @@ async function beginAudio(){
   fallback=new EngineSynth(ctx.sampleRate);
   const node=ctx.createScriptProcessor(1024,0,2);
   node.onaudioprocess=event=>fallback.render(event.outputBuffer.getChannelData(0),event.outputBuffer.getChannelData(1));
-  node.connect(filter);processor=null;audioBackend='compatibility';
-  window.__hijjawixFallbackNode=node; // keep Web Audio node alive on older browsers
+  node.connect(filter);processor=null;audioNode=node;audioBackend='compatibility';
  }
  $('audioDevice').textContent=t(audioBackend==='worklet'?'worklet':'fallback');
  await resumed;
@@ -188,7 +187,10 @@ async function start(){
   if(scenario==='drive'&&sourceMode==='gps')startGps();
  }catch(err){
   console.error('Tesla Sound X audio start:',err);
-  running=false;feedback('audioFailure');showRunning();
+  running=false;
+  if(audioCtx){try{await audioCtx.close()}catch{}}
+  audioCtx=null;processor=null;audioNode=null;fallback=null;master=null;
+  feedback('audioFailure');showRunning();
  }
 }
 function stop(){
