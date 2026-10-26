@@ -1,263 +1,322 @@
-(()=>{'use strict';
+import {ENGINE_PRESETS,EngineSynth} from './engine-core.js';
+
 const $=id=>document.getElementById(id);
-const profiles={
-v8:{name:'MASERATI GRANTURISMO S',detail:'V8 / REAL EXHAUST RECORDING',cyl:'V8',idle:780,red:7300,max:7800,filename:'Maserati GranTurismo S Exhaust.ogg',url:'https://upload.wikimedia.org/wikipedia/commons/9/98/Maserati_GranTurismo_S_Exhaust.ogg',source:'https://commons.wikimedia.org/wiki/File:Maserati_GranTurismo_S_Exhaust.ogg',author:'lmartins',license:'CC BY 4.0'},
-v10:{name:'LAMBORGHINI GALLARDO',detail:'V10 / GOODWOOD HILLCLIMB RECORDING',cyl:'V10',idle:950,red:8200,max:8800,filename:'Lamborghini Gallardo LP570-4 Superleggera.ogg',url:'https://upload.wikimedia.org/wikipedia/commons/0/0b/Lamborghini_Gallardo_LP570-4_Superleggera.ogg',source:'https://commons.wikimedia.org/wiki/File:Lamborghini_Gallardo_LP570-4_Superleggera.ogg',author:'Edvvc / Ed Pond',license:'CC BY-SA 3.0'},
-v12:{name:'PAGANI ZONDA R',detail:'V12 / GOODWOOD HILLCLIMB RECORDING',cyl:'V12',idle:980,red:7600,max:8300,filename:'Pagani Zonda R.ogg',url:'https://upload.wikimedia.org/wikipedia/commons/8/88/Pagani_Zonda_R.ogg',source:'https://commons.wikimedia.org/wiki/File:Pagani_Zonda_R.ogg',author:'Edvvc / Ed Pond',license:'CC BY-SA 3.0'},
-flat6:{name:'PORSCHE 911 R',detail:'FLAT-6 / CLASSIC HILLCLIMB RECORDING',cyl:'FLAT-6',idle:880,red:7600,max:8400,filename:'Porsche 911R (1967).ogg',url:'https://upload.wikimedia.org/wikipedia/commons/1/17/Porsche_911R_(1967).ogg',source:'https://commons.wikimedia.org/wiki/File:Porsche_911R_(1967).ogg',author:'Edvvc / Ed Pond',license:'CC BY-SA 3.0'},
-electric:{name:'TESLA ROADSTER',detail:'ELECTRIC / REAL ROADSTER RECORDING',cyl:'EV',idle:0,red:8800,max:9500,filename:'Tesla Roadster.ogg',url:'https://upload.wikimedia.org/wikipedia/commons/7/7b/Tesla_Roadster.ogg',source:'https://commons.wikimedia.org/wiki/File:Tesla_Roadster.ogg',author:'Edvvc / Ed Pond',license:'CC BY-SA 3.0'},
-taycan:{name:'PORSCHE TAYCAN',detail:'OEM SOUND / LICENSED IMPORT REQUIRED',cyl:'EV',idle:0,red:8500,max:9000,filename:null,url:null,source:'https://newsroom.porsche.com/en_US/2022/products/porsche-sound-of-the-taycan-christophorus-402-27910.html',author:'Porsche / original audio is not bundled',license:'IMPORT'}
-};
-const dict={
+const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
+const messages={
 ar:{
-back:'المنصة الرئيسية',heroTitle:'صوت حقيقي. حضور استثنائي.',heroLead:'تسجيلات أصلية لمحركات رياضية حقيقية، وتحكّم بالصوت من متصفح تسلا. اختر الشخصية، واستمتع بالمحاكاة دون تعديل أنظمة السيارة.',
-garageTitle:'اختار الصوت اللي بناسبك',garageSub:'تسجيلات حقيقية من سيارات مختلفة. بعضها يحتاج الإنترنت للتشغيل.',recorded:'تسجيل حقيقي',requiresFile:'أضف تسجيل مرخّص',soundCharacter:'تحكّم بالتجربة',volume:'مستوى الصوت',intensity:'استجابة الدعسة',experience:'نوع التجربة',rev:'صوت المحرك بالوقوف',drive:'أثناء القيادة',revHint:'دعسة افتراضية أثناء الوقوف. لا يقرأ التطبيق دعسة السيارة الحقيقية.',driveHint:'الصوت يتفاعل مع أزرار المحاكاة أو تغير سرعة GPS، وليس دعسة تسلا الفعلية.',inputSource:'مصدر السرعة',demo:'محاكاة',gps:'GPS',demoHint:'تقدير افتراضي للسرعة من أزرار الشاشة.',gpsHint:'السرعة من GPS وقد يتأخر الصوت عن تسارع السيارة الحقيقي.',off:'متوقف',on:'يعمل',throttle:'دعسة افتراضية',ready:'اختر محركاً واضغط تشغيل.',start:'تشغيل الصوت الحقيقي',stop:'إيقاف الصوت',brake:'فرامل',hold:'اضغط باستمرار',revPedal:'ارفع RPM',accelerate:'تسارع',gpsNotice:'GPS يعرض تقديراً للسرعة، وليس قراءة دعسة السيارة.',remoteSource:'تسجيل حقيقي من مكتبة Wikimedia Commons، ويحتاج إنترنت. قد تسمع أصواتاً محيطة من التسجيل الأصلي.',sourceLink:'المصدر والترخيص ↗',importAudio:'استيراد ملف صوت خاص',fileHint:'ملف صوت لديك حق استخدامه، حتى 25MB.',taycanOfficial:'اسمع مثال Taycan الرسمي من موقع Porsche ↗',feature1:'تسجيلات حقيقية',feature1Desc:'أصوات سيارات أصلية منشورة بتراخيص مفتوحة؛ لا موجات إلكترونية اصطناعية.',feature2:'الصوت يستجيب',feature2Desc:'سرعة التشغيل وطبقة الصوت تتبدل مع الدعسة الافتراضية أو سرعة GPS، وليس مع دعسة السيارة الحقيقية.',feature3:'صوت خارجي؟',feature3Desc:'Boombox قد يشغّل الوسائط خارج السيارة على P إن كانت مزوّدة بـPWS. التطبيق لا يتحكم به مباشرةً.',externalTitle:'كيف أجرّب السماعة الخارجية؟',externalSteps:'السيارة على P: افتح Toybox ثم Boombox، وإذا كان الخيار متوفراً اختر Play Current Media. شغّل الصوت من التطبيق واختبر إن كان متصفح السيارة يُعتبر المصدر الحالي. إذا لم يعمل، فلا يمكن لتطبيق الويب توجيه الصوت للسماعة الخارجية بنفسه. أثناء القيادة لا تحاول تجاوز نظام تحذير المشاة.',licenseTitle:'مصادر الأصوات والتراخيص',safety:'هذه تجربة صوتية ترفيهية غير تابعة لأي شركة سيارات. جهّزها والسيارة على P ولا تستخدم الشاشة أثناء القيادة. الصوت يُشغّل على نظام الوسائط فقط، ولا يتحكم بتسارع السيارة أو سماعة التحذير الخارجية. التسجيلات قد تحتوي أصوات جمهور أو ضجيج محيط، وليست ملفات تشغيل OEM متعددة السرعات.',
-needTaycan:'لصوت Taycan الحقيقي، أضف ملفاً تملك حق استخدامه، أو استمع إلى المثال الرسمي عبر الرابط أسفل الشاشة.',missingAudio:'لا يوجد ملف لهذا الصوت بعد. اختر صوتاً آخر أو استورد ملفاً.',loadingAudio:'جاري تحميل التسجيل الحقيقي…',audioError:'تعذّر تحميل التسجيل من المصدر. جرّب اتصال الإنترنت أو استورد ملف MP3/WAV.',playError:'متصفح السيارة لم يسمح بتشغيل هذا التسجيل. جرّب استيراد ملف MP3.',playing:'التسجيل الحقيقي يعمل الآن.',stopped:'توقف الصوت.',gpsWaiting:'بانتظار سرعة GPS…',gpsReady:'يتم استخدام سرعة GPS.',gpsUnavailable:'الموقع غير متاح في هذا المتصفح. استخدم المحاكاة.',gpsNoSpeed:'GPS يعمل لكن لم يرسل قراءة سرعة صالحة.',custom:'صوت مستورد من جهازك',customFile:'ملف مخصص:',tooLarge:'الملف أكبر من 25MB. اختر ملفاً أصغر.',badFile:'اختر ملفاً صوتياً صالحاً MP3 أو WAV أو OGG أو M4A.',sourceReal:'تسجيل حقيقي من Wikimedia Commons',sourceCustom:'ملف صوت محلي اخترته أنت. لا يتم رفعه لخادمنا.',fileSelected:'تم اختيار ملف:',creditsIntro:'المواد الصوتية من Wikimedia Commons. تُشغّل التسجيلات الأصلية مع تغيير معدل التشغيل آنيّاً، ودون توزيع نسخ معدّلة منها.',creditsTail:'تنطبق شروط نسبة العمل للمؤلف وإعادة الترخيص على أي نسخ مشتقة تنشرها لاحقاً.'
+ back:'المنصة الرئيسية',heroTitle:'صوت هيدرز. يتغيّر مع كل دعسة.',heroLead:'محرك صوتي جديد يحاكي نبضات اشتعال الأسطوانات والعادم والهيدرز وسحب الهواء والنقلات، لحظة بلحظة، من دون ملفات MP3 مكررة.',
+ garageTitle:'اختار محركك',garageSub:'ستة أصوات مصمّمة بمحاكاة صوتية أصلية، وليست تسجيلات أو أصوات المصنع الرسمية.',
+ synthesized:'محرك صوتي مباشر',soundCharacter:'اضبط شخصية الصوت',volume:'الصوت',intensity:'استجابة الدعسة',character:'صوت الهيدرز / طابع العادم',crackle:'فرقعة العادم عند رفع القدم',whine:'صفير السوبرتشارجر / الموتور',
+ experience:'نوع التجربة',rev:'Park Rev',drive:'Drive Mode',revHint:'ارفع RPM بالدعسة الافتراضية والسيارة على P. لا يقرأ التطبيق دعسة تسلا الحقيقية.',driveHint:'تسارع افتراضي أو صوت يتبع سرعة GPS؛ الاستجابة الحقيقية للدعسة تحتاج بيانات السيارة.',inputSource:'مصدر التسارع',demo:'محاكاة',gps:'GPS',demoHint:'دعسة وفرامل افتراضيتان على الشاشة.',gpsHint:'السرعة من GPS وقد يتأخر الصوت عن دعسة السيارة.',
+ off:'متوقف',on:'يعمل',throttle:'دعسة افتراضية',ready:'اختَر محركاً، واضغط تشغيل لتسمع الصوت.',start:'تشغيل صوت المحرك',stop:'إيقاف الصوت',brake:'فرامل',hold:'اضغط باستمرار',revPedal:'ارفع RPM',accelerate:'تسارع',
+ demoRun:'اسمع تسارع ونقلات أوتوماتيك',demoEnd:'إيقاف التجربة',gpsNotice:'GPS يقرأ سرعة السيارة فقط، وليس مقدار الضغط الفعلي على الدعسة.',
+ sourceDescription:'كل أسطوانة تولّد نبضة عادم، تمر بمرنانات تحاكي أنابيب الهيدرز، ومجاري الهواء، والتيربو، والنقلات. الصوت يُولّد فوراً ولا توجد ملفات صوت.',
+ realismNote:'محاكاة أصلية مستوحاة من صوتيات المحركات وليست نسخة من كود TeslaSound.io أو تسجيلات Porsche أو أي مصنع.',feature1:'نبضات محركات حقيقية في النموذج',feature1Desc:'4 أشواط، ترتيب اشتعال الأسطوانات، ضغط العادم ورنين الهيدرز.',
+ feature2:'نقلات وفرقعة عند رفع القدم',feature2Desc:'تبديل افتراضي، سحب هواء، هبوط RPM، وCrackle قابل للتعديل.',
+ feature3:'بدون جهاز وبدون اشتراك',feature3Desc:'يعمل مباشرة في المتصفح. GPS لا يرسل بيانات الموقع إلى خادمنا.',
+ physicsTitle:'كيف يتولّد الصوت؟',physicsBody:'محرك Web Audio يحسب توقيت اشتعال الأسطوانات ونبضات الضغط لكل بنك في المحرك، ثم يمرر الصوت عبر مرنانات ومواسير عادم ومؤثرات ميكانيكية. الـV8 يملك نمط نبضات غير متساوٍ لكل جهة، والـV12 أكثر نعومة، والـFlat-6 أعلى حدة. هذه تقريب صوتي من تصميمنا، وليست محاكاة فيزيائية معتمدة أو نسخة مطابقة للصوت الأصلي.',
+ externalTitle:'هل يشتغل على السماعة الخارجية؟',externalSteps:'المتصفح يخرج الصوت إلى سماعات المقصورة. لا يمكن لتطبيق الويب تحديد سماعة تحذير المشاة الخارجية. وضع Boombox/Play Current Media ممكن على P في بعض سيارات تسلا، لكن تشغيل صوت المتصفح عليه غير مضمون، ولا يعمل كحل صوت قيادة خارجي.',
+ safety:'لا تستخدم الأزرار أثناء القيادة. اضبط الصوت والسيارة على P، وخلّي صوت تنبيهات الطريق مسموعاً. هذا صوت ترفيهي ولا يتحكم بالسيارة أو بالدعسة أو بسماعة تحذير المشاة.',audioInitializing:'تجهيز المحرك الصوتي…',audioReady:'محرك الصوت يعمل الآن.',audioFailure:'تعذر تشغيل Web Audio. جرّب إعادة فتح الصفحة أو متصفحاً محدثاً.',audioBlocked:'المتصفح منع الصوت. اضغط تشغيل مرة أخرى.',stopped:'المحرك متوقف.',gpsWaiting:'بانتظار إشارة GPS…',gpsReady:'الصوت يتبع السرعة المقاسة من GPS.',gpsNoSpeed:'الموقع متاح لكن لا توجد قراءة سرعة صالحة.',gpsUnavailable:'الموقع غير متاح. اختر المحاكاة.',doneDemo:'انتهت تجربة القيادة. جرّب وضع Park Rev.',worklet:'AUDIO WORKLET · LOW LATENCY',fallback:'COMPATIBILITY AUDIO ENGINE',needsGesture:'اضغط تشغيل للسماح بالصوت.'
 },
 en:{
-back:'Back to platform',heroTitle:'Real sound. Unmistakable presence.',heroLead:'Genuine sports-car recordings and a premium driving sound studio for your Tesla browser. No vehicle system modification.',
-garageTitle:'Build your sound identity',garageSub:'Real vehicle recordings from openly licensed sources. Internet is required for remote playback.',recorded:'Real recording',requiresFile:'Import licensed audio',soundCharacter:'Tune the experience',volume:'Media volume',intensity:'Throttle response',experience:'Experience',rev:'Park rev',drive:'Driving',revHint:'On-screen virtual pedal while parked. This does not read your physical accelerator.',driveHint:'Audio reacts to demo pedals or GPS speed changes, not your actual Tesla accelerator.',inputSource:'Speed source',demo:'Simulation',gps:'GPS',demoHint:'On-screen controls simulate speed.',gpsHint:'GPS speed can lag real acceleration.',off:'OFF',on:'PLAYING',throttle:'VIRTUAL THROTTLE',ready:'Choose a car sound, then press Start.',start:'Start real recording',stop:'Stop recording',brake:'Brake',hold:'Press and hold',revPedal:'Rev engine',accelerate:'Accelerate',gpsNotice:'GPS estimates vehicle speed; it does not measure the accelerator position.',remoteSource:'Genuine recording from Wikimedia Commons. Internet required. Background crowd noise may be audible.',sourceLink:'Audio source & license ↗',importAudio:'Import your own sound',fileHint:'Use a file you have rights to, up to 25MB.',taycanOfficial:'Hear the original Taycan example on Porsche Newsroom ↗',feature1:'Recorded audio',feature1Desc:'Real recordings under open licenses, not electronic oscillator tones.',feature2:'Responsive playback',feature2Desc:'Playback rate and pitch respond to virtual pedals or GPS, not the physical accelerator.',feature3:'Exterior speaker?',feature3Desc:'Boombox may play current media outdoors in Park on cars with PWS. The web app cannot choose its output.',externalTitle:'How do I test the external speaker?',externalSteps:'While in Park, open Toybox → Boombox, and choose Play Current Media if available. Start the app and see whether the vehicle treats browser audio as current media. The website cannot force external playback. Do not bypass pedestrian warnings while driving.',licenseTitle:'Recordings and licenses',safety:'Independent entertainment software, not affiliated with Tesla or other manufacturers. Configure while parked and do not touch the display while driving. Audio only; no vehicle control or pedestrian speaker override. Single recordings may include ambient noise and are not multi-RPM OEM sound libraries.',
-needTaycan:'To play the exact Taycan audio, import a recording you are licensed to use, or hear Porsche’s official sample below.',missingAudio:'No audio selected. Choose another profile or import a recording.',loadingAudio:'Loading the original recording…',audioError:'Source could not load. Check the connection or import an MP3/WAV.',playError:'Playback was blocked. Try importing an MP3 recording.',playing:'Real recording is playing.',stopped:'Audio stopped.',gpsWaiting:'Waiting for GPS speed…',gpsReady:'Using GPS speed.',gpsUnavailable:'Location not available. Use Demo instead.',gpsNoSpeed:'GPS has not supplied speed yet.',custom:'Your imported audio',customFile:'Custom file:',tooLarge:'Audio file is over 25MB.',badFile:'Please select MP3, WAV, OGG or M4A audio.',sourceReal:'Genuine Wikimedia Commons recording',sourceCustom:'Audio loaded locally from your device. It is not uploaded to our server.',fileSelected:'Selected:',creditsIntro:'Original recordings hosted by Wikimedia Commons. Playback pitch/rate is adjusted live; no remixed audio files are redistributed.',creditsTail:'If you publish derived files, credit and ShareAlike license requirements may apply.'
+ back:'Back to platform',heroTitle:'Open headers. Every rev has character.',heroLead:'A brand-new live sound engine that models cylinder firing, exhaust headers, intake and gearshifts in real time. No repeating MP3 samples.',
+ garageTitle:'Choose your engine',garageSub:'Six independent synthesized sound models — not original manufacturer recordings.',
+ synthesized:'Live sound model',soundCharacter:'Tune the engine',volume:'Audio volume',intensity:'Throttle intensity',character:'Exhaust character / open headers',crackle:'Overrun crackle',whine:'Supercharger / electric whine',
+ experience:'Experience',rev:'Park Rev',drive:'Drive Mode',revHint:'Rev using the virtual pedal while your vehicle is parked. The app cannot read your physical Tesla accelerator.',driveHint:'Virtual accelerator or GPS-derived speed, not real physical pedal position.',inputSource:'Drive input',demo:'Demo',gps:'GPS',demoHint:'Virtual accelerator and brake on screen.',gpsHint:'GPS response may lag actual acceleration.',
+ off:'OFF',on:'RUNNING',throttle:'VIRTUAL THROTTLE',ready:'Choose an engine and press Start.',start:'Start live engine',stop:'Stop engine',brake:'Brake',hold:'Press and hold',revPedal:'Rev engine',accelerate:'Accelerate',
+ demoRun:'Hear automatic launch & shifts',demoEnd:'Stop demo run',gpsNotice:'GPS measures your speed, not physical accelerator position.',
+ sourceDescription:'Each cylinder creates an exhaust pressure event, shaped by independent header resonances, pipe reflections, intake and shift dynamics. No audio files or loops.',
+ realismNote:'Independent audio model, not TeslaSound.io code, Porsche OEM sound or any manufacturer recording.',feature1:'Four-stroke firing events',feature1Desc:'Cylinder timing, exhaust pressure, individual banks and header resonance.',
+ feature2:'Gear shifts and overrun',feature2Desc:'Virtual shifting, intake roar, falling RPM and adjustable crackle.',
+ feature3:'No extra hardware or subscription',feature3Desc:'Runs in the browser; GPS coordinates never leave your device.',
+ physicsTitle:'How the sound works',physicsBody:'The Web Audio engine calculates cylinder firing events and exhaust pressure by bank, then models resonances, exhaust pipes and mechanical harmonics. V8 uses uneven bank timing; V12 is smoother and flat-six is sharper. This independent approximation is not an OEM audio replica or a verified full acoustic simulation.',
+ externalTitle:'Can it use the outside speaker?',externalSteps:'Browser audio plays through cabin speakers. A website cannot target the pedestrian-warning speaker. Some Tesla models offer Boombox / Play Current Media in Park, but the browser may not be considered the source; there is no supported exterior driving sound mode from this site.',
+ safety:'Configure while parked. Do not operate the screen while driving. Keep warnings and surrounding sounds audible. Entertainment only; no vehicle or pedestrian-warning audio control.',audioInitializing:'Starting sound engine…',audioReady:'Engine audio is running.',audioFailure:'Web Audio could not start; reopen the page or update the browser.',audioBlocked:'Audio was blocked. Tap Start again.',stopped:'Engine stopped.',gpsWaiting:'Waiting for GPS…',gpsReady:'Audio follows GPS speed.',gpsNoSpeed:'No valid GPS speed reported yet.',gpsUnavailable:'GPS unavailable; use Demo.',doneDemo:'Demo completed. Try Park Rev next.',worklet:'AUDIO WORKLET · LOW LATENCY',fallback:'COMPATIBILITY AUDIO ENGINE',needsGesture:'Tap Start to enable sound.'
 }
 };
-let lang='ar',profileId='v8',scenario='rev',sourceMode='demo',running=false,gas=false,brake=false;
-let rpm=0,speed=0,throttle=0,gear=1,last=0,gpsWatch=null,gpsLast=0,gpsValue=0,gpsPrev=0,gpsAccel=0;
-let audio=null,audioVersion=0,customFiles=new Map(),objectUrls=new Map();
-const tr=key=>dict[lang][key]||key;
-const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
-function setFeedback(key){$('feedback').textContent=tr(key)}
-function updateLanguage(){
+let lang='ar',profileId='v8',scenario='rev',sourceMode='demo';
+let running=false,gas=false,brake=false,gasValue=.9;
+let rpm=0,speed=0,throttle=0,gear=1,lastTick=0,lastShift=0;
+let gpsWatch=null,gpsAt=0,gpsSpeed=0,gpsPrevious=0,gpsAcceleration=0;
+let demoActive=false,demoStarted=0;
+let audioCtx=null,master=null,processor=null,fallback=null,audioNode=null;
+let audioBackend='none',audioError=null;
+let lastAudioState=null;
+const t=k=>messages[lang][k]||k;
+
+function feedback(key){$('feedback').textContent=t(key)}
+function applyLanguage(){
  document.documentElement.lang=lang;document.documentElement.dir=lang==='ar'?'rtl':'ltr';
- document.querySelectorAll('[data-t]').forEach(node=>{node.textContent=tr(node.dataset.t)});
+ document.querySelectorAll('[data-t]').forEach(el=>{el.textContent=t(el.dataset.t)});
  $('languageButton').textContent=lang==='ar'?'EN':'عربي';
- document.querySelectorAll('[data-engine]').forEach(button=>{const label=button.querySelector('.engine-footer [data-t]');if(label)label.textContent=tr(label.dataset.t)});
- renderProfile();renderModes();renderStatus();renderCredits();
+ showProfile();showMode();showRunning();showDemo();
 }
-$('languageButton').addEventListener('click',()=>{lang=lang==='ar'?'en':'ar';updateLanguage()});
-function renderCredits(){
- const parent=$('creditsList');parent.replaceChildren();
- for(const [id,p] of Object.entries(profiles)){
-  if(!p.filename)continue;
-  const wrap=document.createElement('div');wrap.className='credits-row';
-  const a=document.createElement('a');a.href=p.source;a.target='_blank';a.rel='noopener noreferrer';a.textContent=p.name+' / '+p.author+' / '+p.license;
-  const note=document.createElement('small');note.textContent=lang==='ar'?'التسجيل الأصلي — يمكن تعديل سرعة تشغيله داخل التطبيق':'Original recording — playback rate is adjusted in-browser';
-  wrap.append(a,note);parent.append(wrap);
- }
- const info=document.createElement('small');info.textContent=tr('creditsIntro')+' '+tr('creditsTail');parent.append(info);
-}
-function hasCustom(id){return customFiles.has(id)}
-function sourceFor(id){return hasCustom(id)?customFiles.get(id).url:profiles[id].url}
-function renderProfile(){
- const p=profiles[profileId],custom=customFiles.get(profileId);
- document.querySelectorAll('[data-engine]').forEach(b=>{const is=b.dataset.engine===profileId;b.classList.toggle('selected',is);b.setAttribute('aria-pressed',String(is))});
+$('languageButton').addEventListener('click',()=>{lang=lang==='ar'?'en':'ar';applyLanguage()});
+function showProfile(){
+ const p=ENGINE_PRESETS[profileId];
  $('currentEngine').textContent=p.name;
- $('profileSubtitle').textContent=custom?'CUSTOM • '+custom.name:p.detail;
- $('sourcePill').textContent=custom?'LOCAL AUDIO':p.license;
- $('sourceDescription').textContent=custom?tr('sourceCustom'):p.url?tr('remoteSource'):tr('needTaycan');
- $('creditLink').hidden=!!custom||!p.url;
- if(!custom&&p.url)$('creditLink').href=p.source;
- $('taycanOfficial').hidden=profileId!=='taycan';
- $('fileLabel').textContent=custom?tr('fileSelected')+' '+custom.name:tr('fileHint');
- $('sourcePill').style.borderColor=custom?'#6d99a4':'';
+ $('profileSubtitle').textContent=p.detail;
+ document.querySelectorAll('[data-engine]').forEach(b=>{
+  const active=b.dataset.engine===profileId;
+  b.classList.toggle('selected',active);b.setAttribute('aria-pressed',String(active));
+ });
 }
-function stopAudio(){
- audioVersion++;
- if(!audio)return;
- try{audio.pause();audio.removeAttribute('src');audio.load()}catch{}
- audio=null;
+function sendAudio(shift){
+ if(!processor&&!fallback)return;
+ const state={profile:profileId,rpm,load:throttle,character:Number($('character').value)/100,
+  crackle:Number($('crackle').value)/100,whine:Number($('whine').value)/100,
+  active:running};
+ if(shift)state.shift=shift;
+ if(processor)processor.port.postMessage(state);
+ else fallback.setState(state);
+ lastAudioState=state;
 }
-function prepareAudio(){
- stopAudio();
- const url=sourceFor(profileId);
- if(!url)return false;
- const current=++audioVersion;
- const a=new Audio();
- a.preload='auto';a.loop=true;a.src=url;a.volume=0;a.playbackRate=1;
- try{a.preservesPitch=false;a.mozPreservesPitch=false;a.webkitPreservesPitch=false}catch{}
- a.addEventListener('error',()=>{if(audio===a&&audioVersion===current)setFeedback('audioError')});
- a.addEventListener('canplay',()=>{if(audio===a&&audioVersion===current&&!running)setFeedback('ready')});
- audio=a;
- return true;
+function selectProfile(id){
+ if(!ENGINE_PRESETS[id])return;
+ profileId=id;rpm=running?ENGINE_PRESETS[id].idle:0;gear=1;throttle=0;
+ showProfile();render();
+ sendAudio();
 }
-function switchProfile(id){
- if(!profiles[id])return;
- const wasRunning=running;
- if(wasRunning){running=false;stopAudio()}
- profileId=id;
- prepareAudio();renderProfile();renderStatus();
- if(wasRunning)start();
- else setFeedback(id==='taycan'&&!hasCustom(id)?'needTaycan':'ready');
+document.querySelectorAll('[data-engine]').forEach(b=>b.addEventListener('click',()=>selectProfile(b.dataset.engine)));
+function showMode(){
+ const parked=scenario==='rev',manual=sourceMode==='demo';
+ $('revMode').classList.toggle('active',parked);$('driveMode').classList.toggle('active',!parked);
+ $('revMode').setAttribute('aria-pressed',String(parked));$('driveMode').setAttribute('aria-pressed',String(!parked));
+ $('scenarioHint').textContent=t(parked?'revHint':'driveHint');
+ $('sourceSetting').hidden=parked;
+ $('demoMode').classList.toggle('active',manual);$('gpsMode').classList.toggle('active',!manual);
+ $('demoMode').setAttribute('aria-pressed',String(manual));$('gpsMode').setAttribute('aria-pressed',String(!manual));
+ $('modeHint').textContent=t(manual?'demoHint':'gpsHint');
+ $('gpsNotice').hidden=parked||manual;
+ $('demoPedals').hidden=!parked&&!manual;
+ $('demoPedals').classList.toggle('rev-pedals',parked);
+ $('brakePedal').hidden=parked;
+ $('gasPedal').querySelector('strong').textContent=t(parked?'revPedal':'accelerate');
+ $('gasPedal').disabled=!running||(!parked&&!manual)||demoActive;
+ $('brakePedal').disabled=!running||parked||!manual||demoActive;
+ $('gpsQuality').textContent=parked?'PARK • REV':manual?'DRIVE • DEMO':gpsAt?'GPS • LIVE':'GPS • WAITING';
 }
-document.querySelectorAll('[data-engine]').forEach(button=>button.addEventListener('click',()=>switchProfile(button.dataset.engine)));
-function renderModes(){
- const park=scenario==='rev';
- $('revMode').classList.toggle('active',park);$('driveMode').classList.toggle('active',!park);
- $('revMode').setAttribute('aria-pressed',String(park));$('driveMode').setAttribute('aria-pressed',String(!park));
- $('scenarioHint').textContent=tr(park?'revHint':'driveHint');
- $('sourceSetting').hidden=park;
- $('demoMode').classList.toggle('active',sourceMode==='demo');$('gpsMode').classList.toggle('active',sourceMode==='gps');
- $('demoMode').setAttribute('aria-pressed',String(sourceMode==='demo'));
- $('gpsMode').setAttribute('aria-pressed',String(sourceMode==='gps'));
- $('modeHint').textContent=tr(sourceMode==='demo'?'demoHint':'gpsHint');
- $('gpsNotice').hidden=park||sourceMode!=='gps';
- $('demoPedals').hidden=!park&&sourceMode==='gps';
- $('demoPedals').classList.toggle('rev-pedals',park);
- $('brakePedal').hidden=park;
- $('gasPedal').querySelector('strong').textContent=tr(park?'revPedal':'accelerate');
- $('gpsQuality').textContent=park?'PARK • DEMO':sourceMode==='demo'?'DRIVE • DEMO':gpsLast?'GPS • LIVE':'GPS • WAITING';
- $('gasPedal').disabled=!running||(!park&&sourceMode==='gps');
- $('brakePedal').disabled=!running||park||sourceMode==='gps';
-}
-function releasePedals(){
- gas=false;brake=false;
- for(const pedal of document.querySelectorAll('.pedal'))pedal.classList.remove('pressed');
-}
-function stopGps(){if(gpsWatch!==null&&navigator.geolocation)navigator.geolocation.clearWatch(gpsWatch);gpsWatch=null;gpsLast=0}
+function releasePedals(){gas=false;brake=false;document.querySelectorAll('.pedal').forEach(p=>p.classList.remove('pressed'))}
+function stopGps(){if(gpsWatch!==null&&navigator.geolocation)navigator.geolocation.clearWatch(gpsWatch);gpsWatch=null;gpsAt=0}
 function startGps(){
- if(!navigator.geolocation||!window.isSecureContext){setFeedback('gpsUnavailable');return}
- setFeedback('gpsWaiting');
+ if(!navigator.geolocation||!window.isSecureContext){feedback('gpsUnavailable');return}
+ feedback('gpsWaiting');
  gpsWatch=navigator.geolocation.watchPosition(pos=>{
   const measured=pos.coords.speed;
-  if(!Number.isFinite(measured)){setFeedback('gpsNoSpeed');return}
-  const now=performance.now(),value=clamp(measured*3.6,0,260),dt=gpsLast?Math.max(.3,(now-gpsLast)/1000):1;
-  gpsAccel=clamp((value-gpsPrev)/dt,-30,30);gpsPrev=value;gpsValue=value;gpsLast=now;
-  setFeedback('gpsReady');renderModes();
- },()=>setFeedback('gpsUnavailable'),{enableHighAccuracy:true,maximumAge:300,timeout:9000});
+  if(measured==null||!Number.isFinite(measured)){feedback('gpsNoSpeed');return}
+  const now=performance.now(),kmh=clamp(measured*3.6,0,260),dt=gpsAt?Math.max(.3,(now-gpsAt)/1000):1;
+  gpsAcceleration=clamp((kmh-gpsPrevious)/dt,-24,24);
+  gpsPrevious=kmh;gpsSpeed=kmh;gpsAt=now;
+  feedback('gpsReady');showMode();
+ },()=>feedback('gpsUnavailable'),{enableHighAccuracy:true,maximumAge:450,timeout:10000});
 }
-function chooseScenario(next){
+function setScenario(next){
  if(next===scenario)return;
- releasePedals();stopGps();scenario=next;sourceMode='demo';speed=0;throttle=0;rpm=running?profiles[profileId].idle:0;gear=1;
- gpsValue=0;gpsPrev=0;gpsAccel=0;renderModes();render();
+ demoActive=false;releasePedals();stopGps();scenario=next;sourceMode='demo';
+ speed=0;throttle=0;rpm=running?ENGINE_PRESETS[profileId].idle:0;gear=1;
+ gpsSpeed=0;gpsPrevious=0;gpsAcceleration=0;
+ showMode();showDemo();render();sendAudio();
 }
-$('revMode').addEventListener('click',()=>chooseScenario('rev'));
-$('driveMode').addEventListener('click',()=>chooseScenario('drive'));
-function chooseSource(next){
+$('revMode').addEventListener('click',()=>setScenario('rev'));
+$('driveMode').addEventListener('click',()=>setScenario('drive'));
+function setSource(next){
  if(next===sourceMode||scenario==='rev')return;
- releasePedals();stopGps();sourceMode=next;speed=0;throttle=0;gear=1;
- gpsValue=0;gpsPrev=0;gpsAccel=0;
- if(running&&next==='gps')startGps();
- renderModes();
+ demoActive=false;releasePedals();stopGps();sourceMode=next;
+ speed=0;throttle=0;gear=1;gpsSpeed=0;gpsPrevious=0;gpsAcceleration=0;
+ if(running&&!demoActive&&next==='gps')startGps();
+ showMode();showDemo();sendAudio();
 }
-$('demoMode').addEventListener('click',()=>chooseSource('demo'));
-$('gpsMode').addEventListener('click',()=>chooseSource('gps'));
-function renderStatus(){
+$('demoMode').addEventListener('click',()=>setSource('demo'));
+$('gpsMode').addEventListener('click',()=>setSource('gps'));
+async function beginAudio(){
+ const Context=window.AudioContext||window.webkitAudioContext;
+ if(!Context)throw Error('Web Audio unavailable');
+ // Construct and resume immediately from a user gesture, before any await.
+ const ctx=new Context({latencyHint:'interactive'});
+ audioCtx=ctx;
+ const resumed=ctx.resume();
+ const filter=ctx.createBiquadFilter();filter.type='highpass';filter.frequency.value=27;
+ const bass=ctx.createBiquadFilter();bass.type='lowshelf';bass.frequency.value=135;bass.gain.value=5;
+ const compressor=ctx.createDynamicsCompressor();
+ compressor.threshold.value=-15;compressor.knee.value=19;compressor.ratio.value=3;
+ compressor.attack.value=.006;compressor.release.value=.15;
+ master=ctx.createGain();master.gain.value=0;
+ filter.connect(bass);bass.connect(compressor);compressor.connect(master);master.connect(ctx.destination);
+ audioError=null;
+ if(ctx.audioWorklet&&typeof AudioWorkletNode!=='undefined'){
+  try{
+   await ctx.audioWorklet.addModule('./engine-worklet.js?v=physics-v3');
+   const node=new AudioWorkletNode(ctx,'hijjawix-physics-engine-v3',{
+     numberOfInputs:0,numberOfOutputs:1,outputChannelCount:[2]});
+   node.connect(filter);processor=node;audioNode=node;audioBackend='worklet';
+  }catch(err){audioError=err}
+ }
+ if(!processor){
+  // Compatibility mode: same physically based DSP, with larger audio buffers.
+  if(typeof ctx.createScriptProcessor!=='function')throw audioError||new Error('No supported audio processing API');
+  fallback=new EngineSynth(ctx.sampleRate);
+  const node=ctx.createScriptProcessor(1024,0,2);
+  node.onaudioprocess=event=>fallback.render(event.outputBuffer.getChannelData(0),event.outputBuffer.getChannelData(1));
+  node.connect(filter);processor=null;audioNode=node;audioBackend='compatibility';
+ }
+ $('audioDevice').textContent=t(audioBackend==='worklet'?'worklet':'fallback');
+ await resumed;
+ return ctx;
+}
+function updateVolume(){
+ const amount=Number($('volume').value)/100;
+ if(master&&audioCtx)master.gain.setTargetAtTime(running?amount*.95:0,audioCtx.currentTime,.06);
+}
+function showRunning(){
  $('engineStatus').dataset.state=running?'on':'off';
- $('engineStatusText').textContent=tr(running?'on':'off');
- $('startLabel').textContent=tr(running?'stop':'start');
+ $('engineStatusText').textContent=t(running?'on':'off');
+ $('startLabel').textContent=t(running?'stop':'start');
  $('startSymbol').textContent=running?'■':'▶';
  $('startButton').classList.toggle('running',running);
- renderModes();
+ showMode();
 }
-function start(){
+async function start(){
  if(running){stop();return}
- if(!sourceFor(profileId)){setFeedback(profileId==='taycan'?'needTaycan':'missingAudio');return}
- if(!audio)prepareAudio();
- running=true;last=performance.now();rpm=profiles[profileId].idle;
- renderStatus();render();setFeedback('loadingAudio');
+ running=true;rpm=ENGINE_PRESETS[profileId].idle;speed=0;throttle=0;gear=1;lastTick=performance.now();
+ feedback('audioInitializing');showRunning();render();
  try{
-  const attempt=audio.play();
-  if(attempt&&typeof attempt.then==='function'){
-   attempt.then(()=>{if(running&&audio&&!audio.paused)setFeedback('playing')})
-    .catch(()=>{if(running)setFeedback('playError')});
-  }else setFeedback('playing');
- }catch{setFeedback('playError')}
- if(scenario==='drive'&&sourceMode==='gps')startGps();
+  if(!audioCtx)await beginAudio();
+  else if(audioCtx.state!=='running')await audioCtx.resume();
+  if(!running)return;
+  sendAudio();updateVolume();feedback('audioReady');
+  if(scenario==='drive'&&sourceMode==='gps')startGps();
+ }catch(err){
+  console.error('Tesla Sound X audio start:',err);
+  running=false;
+  if(audioCtx){try{await audioCtx.close()}catch{}}
+  audioCtx=null;processor=null;audioNode=null;fallback=null;master=null;
+  feedback('audioFailure');showRunning();
+ }
 }
 function stop(){
- running=false;releasePedals();stopGps();
- if(audio)try{audio.pause();audio.currentTime=0;audio.volume=0}catch{}
- rpm=0;speed=0;throttle=0;gear=1;
- renderStatus();render();setFeedback('stopped');
+ demoActive=false;releasePedals();stopGps();
+ running=false;speed=0;rpm=0;throttle=0;gear=1;
+ sendAudio();updateVolume();feedback('stopped');
+ showRunning();showDemo();render();
 }
-$('startButton').addEventListener('click',start);
+$('startButton').addEventListener('click',()=>{void start()});
 for(const [id,key] of [['gasPedal','gas'],['brakePedal','brake']]){
- const element=$(id);
- function press(event){if(!running||scenario==='drive'&&sourceMode==='gps')return;
-  event.preventDefault();if(key==='gas')gas=true;else brake=true;
-  element.classList.add('pressed');try{element.setPointerCapture(event.pointerId)}catch{}
+ const el=$(id);
+ function press(event){
+  if(!running||demoActive||scenario==='drive'&&sourceMode==='gps')return;
+  event.preventDefault();
+  if(key==='gas'){gas=true;gasValue=clamp(.52+(1-event.offsetY/Math.max(1,el.clientHeight))*.48,.52,1)}
+  else brake=true;
+  el.classList.add('pressed');
+  try{el.setPointerCapture(event.pointerId)}catch{}
  }
- function release(){if(key==='gas')gas=false;else brake=false;element.classList.remove('pressed')}
- element.addEventListener('pointerdown',press);
- for(const event of ['pointerup','pointercancel','lostpointercapture'])element.addEventListener(event,release);
+ function release(){if(key==='gas')gas=false;else brake=false;el.classList.remove('pressed')}
+ el.addEventListener('pointerdown',press);
+ for(const ev of ['pointerup','pointercancel','lostpointercapture'])el.addEventListener(ev,release);
 }
 window.addEventListener('blur',releasePedals);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)releasePedals()});
-function updateAudio(){
- if(!audio||!running)return;
- const value=Number($('volume').value)/100;
- const influence=Number($('intensity').value)/100;
- const dynamic=clamp(throttle*.68+speed/360,0,1);
- const targetRate=clamp(.76+dynamic*(.68*influence+.18),.7,1.75);
- try{
-  if(!audio.paused){
-   audio.playbackRate+=clamp(targetRate-audio.playbackRate,-.05,.05);
-   audio.volume=clamp(value*(.28+.72*throttle),0,.8);
-  }
- }catch{}
+function showDemo(){
+ $('demoRunButton').classList.toggle('running',demoActive);
+ $('demoRunButton').querySelector('strong').textContent=t(demoActive?'demoEnd':'demoRun');
+ showMode();
+}
+async function demoRun(){
+ if(demoActive){demoActive=false;showDemo();return}
+ if(!running)await start();
+ if(!running)return;
+ if(scenario!=='drive')setScenario('drive');
+ if(sourceMode!=='demo')setSource('demo');
+ demoActive=true;releasePedals();speed=0;throttle=0;gear=1;demoStarted=performance.now();
+ showDemo();
+}
+$('demoRunButton').addEventListener('click',()=>{void demoRun()});
+function demoPedals(seconds){
+ const sequence=[
+  [0,1.1,0,0],[1.1,3.2,.45,0],[3.2,6.8,.88,0],[6.8,7.5,0,0],
+  [7.5,11.1,.98,0],[11.1,11.9,.05,0],[11.9,15.0,.77,0],
+  [15.0,17.6,0,0],[17.6,20.0,0,.72],[20.0,22,0,0]
+ ];
+ for(const [a,b,accelerator,brakeValue] of sequence)if(seconds>=a&&seconds<b)return [accelerator,brakeValue];
+ return [0,0];
 }
 function render(){
  $('rpmNumber').textContent=String(Math.round(rpm/10)*10);
  $('speedNumber').textContent=String(Math.round(speed));
- $('gearDisplay').textContent=running?(scenario==='rev'?'P':profiles[profileId].cyl==='EV'?'D':'G'+gear):'N';
+ $('gearDisplay').textContent=running?(scenario==='rev'?'P':ENGINE_PRESETS[profileId].type==='electric'?'D':'G'+gear):'N';
  $('throttleFill').style.width=Math.round(throttle*100)+'%';
  $('throttlePercent').textContent=Math.round(throttle*100)+'%';
- const angle=-125+clamp(rpm/profiles[profileId].max,0,1)*250;
+ const p=ENGINE_PRESETS[profileId],angle=-125+clamp(rpm/p.limit,0,1)*250;
  $('rpmNeedle').setAttribute('transform','rotate('+angle+' 160 160)');
 }
 function tick(){
- const time=performance.now();
- if(!last)last=time;
- const dt=clamp((time-last)/1000,.001,.25);last=time;
- const p=profiles[profileId];
+ const now=performance.now();
+ if(!lastTick)lastTick=now;
+ const dt=clamp((now-lastTick)/1000,.001,.24);
+ lastTick=now;
+ const p=ENGINE_PRESETS[profileId];
  if(running){
-  if(scenario==='rev'){
-   throttle+=(Number(gas)-throttle)*Math.min(1,dt*(gas?4:2.5));
-   speed=0;gear=1;
-   const target=p.idle+(p.red-p.idle)*Math.pow(throttle,.85);
-   rpm+=(target-rpm)*Math.min(1,dt*(gas?7:3.5));
-  }else{
-   if(sourceMode==='demo'){
-    throttle+=(Number(gas)-throttle)*Math.min(1,dt*(gas?4:2.2));
-    speed=clamp(speed+(throttle*14-Number(brake)*24-2.2-speed*.025)*dt,0,220);
+  let inputGas=gas?gasValue:0,inputBrake=brake?1:0;
+  if(demoActive){
+   const elapsed=(now-demoStarted)/1000;
+   if(elapsed>=22){
+    demoActive=false;showDemo();feedback('doneDemo');
+    inputGas=0;inputBrake=0;
    }else{
-    const fresh=gpsLast&&time-gpsLast<5500;
-    speed+=( (fresh?gpsValue:0)-speed)*Math.min(1,dt*2.5);
-    const virtualDemand=fresh?clamp(.14+gpsAccel*.09+speed*.002,0,1):.08;
-    throttle+=(virtualDemand-throttle)*Math.min(1,dt*2);
-   }
-   if(p.cyl==='EV'){
-    gear=1;
-    const target=Math.min(p.red,Math.max(p.idle,speed*37+throttle*2700));
-    rpm+=(target-rpm)*Math.min(1,dt*4.2);
-   }else{
-    const up=[18,43,75,115,165],down=[0,10,30,58,92,135];
-    if(gear<6&&speed>up[gear-1]+(throttle>.5?10:0)&&rpm>p.red*.55)gear++;
-    if(gear>1&&speed<down[gear-1])gear--;
-    const ratios=[1,.63,.43,.32,.25,.21];
-    const target=Math.min(p.red,Math.max(p.idle,(900+speed*62*ratios[gear-1])*(.86+throttle*.20)));
-    rpm+=(target-rpm)*Math.min(1,dt*(throttle>.3?8:4));
+    [inputGas,inputBrake]=demoPedals(elapsed);
    }
   }
-  updateAudio();
+  if(scenario==='rev'){
+   const intensity=Number($('intensity').value)/100;
+   throttle+=(inputGas-throttle)*Math.min(1,dt*(inputGas>throttle?3+intensity*5:3.1));
+   speed=0;gear=1;
+   const target=p.idle+(p.limit-p.idle)*Math.pow(throttle,.8);
+   rpm+=(target-rpm)*Math.min(1,dt*(inputGas?6:4));
+  }else{
+   if(sourceMode==='demo'){
+    throttle+=(inputGas-throttle)*Math.min(1,dt*(inputGas>throttle?6:3));
+    const driveForce=throttle*24;
+    speed=clamp(speed+(driveForce-inputBrake*35-2.4-speed*.04)*dt,0,230);
+   }else{
+    const fresh=gpsAt&&now-gpsAt<5500;
+    const next=fresh?gpsSpeed:0;
+    speed+=(next-speed)*Math.min(1,dt*3);
+    const measuredThrottle=fresh?clamp(.11+Math.max(0,gpsAcceleration)*.11+speed*.0018,0,1):.08;
+    throttle+=(measuredThrottle-throttle)*Math.min(1,dt*2);
+   }
+   if(p.type==='electric'){
+    gear=1;const target=clamp(p.idle+speed*53+throttle*2300,p.idle,p.limit);
+    rpm+=(target-rpm)*Math.min(1,dt*5);
+   }else{
+    const intensity=Number($('intensity').value)/100;
+    const ratio=p.ratios[Math.min(gear-1,p.ratios.length-1)];
+    const stall= p.idle + throttle*1800;
+    const target=clamp(Math.max(stall,speed*ratio+throttle*260),p.idle,p.limit);
+    const shiftPoint=p.idle+(p.limit-p.idle)*(.48+intensity*.35+throttle*.12);
+    if(gear<p.gears&&target>shiftPoint&&now-lastShift>650&&speed>10){
+     gear++;lastShift=now;sendAudio('up');
+    }else if(gear>1&&target<p.idle+1050&&now-lastShift>700){
+     gear--;lastShift=now;sendAudio('down');
+    }
+    const actualRatio=p.ratios[Math.min(gear-1,p.ratios.length-1)];
+    const setPoint=clamp(Math.max(stall,speed*actualRatio+throttle*260),p.idle,p.limit);
+    rpm+=(setPoint-rpm)*Math.min(1,dt*(setPoint<rpm?11:7));
+   }
+  }
+  sendAudio();
  }else{rpm=0;speed=0;throttle=0}
  render();
 }
-$('volume').addEventListener('input',()=>{$('volumeValue').textContent=$('volume').value+'%'});
-$('intensity').addEventListener('input',()=>{$('intensityValue').textContent=$('intensity').value+'%'});
-$('soundFile').addEventListener('change',event=>{
- const file=event.target.files&&event.target.files[0];if(!file)return;
- if(file.size>25*1024*1024){setFeedback('tooLarge');event.target.value='';return}
- if(!/\.(mp3|wav|ogg|m4a)$/i.test(file.name)&&!file.type.startsWith('audio/')){setFeedback('badFile');event.target.value='';return}
- const old=objectUrls.get(profileId);if(old)URL.revokeObjectURL(old);
- const url=URL.createObjectURL(file);
- objectUrls.set(profileId,url);customFiles.set(profileId,{url,name:file.name});
- if(running)stop();
- prepareAudio();renderProfile();setFeedback('fileSelected');
- event.target.value='';
-});
+for(const id of ['volume','intensity','character','crackle','whine']){
+ const slider=$(id),out=$(id+'Value');
+ slider.addEventListener('input',()=>{
+  out.textContent=slider.value+'%';
+  if(id==='volume')updateVolume();else sendAudio();
+ });
+}
 window.addEventListener('pagehide',()=>{
- clearInterval(loop);stopGps();stopAudio();for(const url of objectUrls.values())URL.revokeObjectURL(url);
+ clearInterval(loop);releasePedals();stopGps();
+ if(audioCtx){try{audioCtx.close()}catch{}}
 });
-const loop=setInterval(tick,50);
-prepareAudio();updateLanguage();render();setFeedback('ready');
-})();
+const loop=setInterval(tick,45);
+applyLanguage();feedback('ready');render();

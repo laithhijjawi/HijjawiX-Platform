@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#090b10">
   <meta name="description" content="Tesla Sound X Studio — تسجيلات حقيقية لأصوات السيارات الرياضية ومحاكاة تفاعلية داخل المقصورة.">
-  <meta name="hijjawix-tesla-release" content="tesla-sound-studio-v2">
+  <meta name="hijjawix-tesla-release" content="tesla-sound-physics-v3">
   <link rel="canonical" href="https://hijjawix.com/tesla-sound/">
   <link rel="icon" href="/logo.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./style.css?v=studio-v2">
+  <link rel="stylesheet" href="./style.css?v=physics-v3">
   <title>Tesla Sound X | Premium Sound Studio</title>
 </head>
 <body>
@@ -20,44 +20,50 @@
 <header class="site-header">
   <a class="return-link" href="/"><span class="return-icon">↗</span><span data-t="back">المنصة الرئيسية</span></a>
   <a class="brand" href="/" aria-label="Hijjawi X"><img src="/logo.svg" width="35" height="35" alt=""><span>HIJJAWI <b>X</b></span></a>
-  <div class="header-actions"><span class="header-beta"><span class="status-light"></span> STUDIO V2.0</span><button id="languageButton" class="lang-button" type="button" aria-label="Switch language">EN</button></div>
+  <div class="header-actions"><span class="header-beta"><span class="status-light"></span> PHYSICS V3.0</span><button id="languageButton" class="lang-button" type="button" aria-label="Switch language">EN</button></div>
 </header>
 <main class="shell">
   <section class="hero" aria-label="Tesla Sound X Studio">
     <div class="hero-copy">
-      <span class="eyebrow"><span class="eyebrow-line"></span> AN IMMERSIVE AUDIO EXPERIENCE</span>
+      <span class="eyebrow"><span class="eyebrow-line"></span> REAL-TIME EXHAUST PHYSICS</span>
       <h1>TESLA <span>SOUND</span> <em>X</em></h1>
       <h2 data-t="heroTitle">صوت حقيقي. حضور استثنائي.</h2>
       <p data-t="heroLead">تسجيلات أصلية لمحركات رياضية حقيقية، وتحكّم بالصوت من متصفح تسلا. اختر الشخصية، واستمتع بالمحاكاة دون تعديل أنظمة السيارة.</p>
-      <div class="hero-features"><span><b>05</b> REAL RECORDINGS</span><span><b>02</b> DRIVE MODES</span><span><b>100%</b> BROWSER BASED</span></div>
+      <div class="hero-features"><span><b>06</b> LIVE ENGINE MODELS</span><span><b>02</b> DRIVE MODES</span><span><b>100%</b> BROWSER BASED</span></div>
     </div>
     <div class="hero-visual" aria-hidden="true">
       <div class="halo halo-a"></div><div class="halo halo-b"></div>
       <div class="performance-ring"><span>ENGINE AUDIO</span><strong>REDEFINED.</strong><small>HIJJAWI X / SOUND ENGINEERING</small></div>
       <div class="visual-line line-top"></div><div class="visual-line line-bottom"></div>
-      <span class="hero-micro micro-a">SOUND IS FEELING</span><span class="hero-micro micro-b">PURE SOUND • NO SYNTH WAVES</span>
+      <span class="hero-micro micro-a">SOUND IS FEELING</span><span class="hero-micro micro-b">EXHAUST PULSES • NO AUDIO LOOPS</span>
     </div>
   </section>
 
   <div class="section-heading"><div><span class="mini-label">01 / YOUR SOUND GARAGE</span><h2 data-t="garageTitle">اختار الصوت اللي بناسبك</h2><p data-t="garageSub">تسجيلات حقيقية من سيارات مختلفة. بعضها يحتاج الإنترنت للتشغيل.</p></div><span class="count-pill">06 PROFILES</span></div>
   <section class="studio-layout">
     <div class="left-column">
-      <div id="engineOptions" class="engine-grid" role="group" aria-label="Car sound library">
-        <button type="button" data-engine="v8" class="engine-card selected" aria-pressed="true"><span class="engine-no">01 / V8</span><strong>MASERATI <small>GRANTURISMO S</small></strong><span class="engine-footer"><span class="type-dot"></span><span data-t="recorded">تسجيل حقيقي</span><b>↗</b></span></button>
-        <button type="button" data-engine="v10" class="engine-card" aria-pressed="false"><span class="engine-no">02 / V10</span><strong>LAMBORGHINI <small>GALLARDO LP570</small></strong><span class="engine-footer"><span class="type-dot"></span><span data-t="recorded">تسجيل حقيقي</span><b>↗</b></span></button>
-        <button type="button" data-engine="v12" class="engine-card" aria-pressed="false"><span class="engine-no">03 / V12</span><strong>PAGANI <small>ZONDA R</small></strong><span class="engine-footer"><span class="type-dot"></span><span data-t="recorded">تسجيل حقيقي</span><b>↗</b></span></button>
-        <button type="button" data-engine="flat6" class="engine-card" aria-pressed="false"><span class="engine-no">04 / FLAT-6</span><strong>PORSCHE <small>911 R CLASSIC</small></strong><span class="engine-footer"><span class="type-dot"></span><span data-t="recorded">تسجيل حقيقي</span><b>↗</b></span></button>
-        <button type="button" data-engine="electric" class="engine-card" aria-pressed="false"><span class="engine-no">05 / ELECTRIC</span><strong>TESLA <small>ROADSTER ORIGINAL</small></strong><span class="engine-footer"><span class="type-dot"></span><span data-t="recorded">تسجيل حقيقي</span><b>↗</b></span></button>
-        <button type="button" data-engine="taycan" class="engine-card special" aria-pressed="false"><span class="engine-no">06 / ELECTRIC SPORT</span><strong>PORSCHE <small>TAYCAN • IMPORT</small></strong><span class="engine-footer"><span class="type-dot muted"></span><span data-t="requiresFile">أضف تسجيل مرخّص</span><b>↗</b></span></button>
+      <div id="engineOptions" class="engine-grid" role="group" aria-label="Live engine profiles">
+        <button type="button" data-engine="v8" class="engine-card selected" aria-pressed="true"><span class="engine-no">01 / CROSSPLANE V8</span><strong>MUSCLE V8 <small>6.2L · OPEN HEADERS</small></strong><span class="engine-footer"><span class="type-dot"></span><span data-t="synthesized">نمذجة صوت لحظية</span><b>↗</b></span></button>
+        <button type="button" data-engine="v10" class="engine-card" aria-pressed="false"><span class="engine-no">02 / V10</span><strong>SUPERCAR V10 <small>5.2L · HIGH-REV</small></strong><span class="engine-footer"><span class="type-dot"></span><span data-t="synthesized">نمذجة صوت لحظية</span><b>↗</b></span></button>
+        <button type="button" data-engine="v12" class="engine-card" aria-pressed="false"><span class="engine-no">03 / V12</span><strong>ITALIAN V12 <small>6.5L · NATURAL INTAKE</small></strong><span class="engine-footer"><span class="type-dot"></span><span data-t="synthesized">نمذجة صوت لحظية</span><b>↗</b></span></button>
+        <button type="button" data-engine="flat6" class="engine-card" aria-pressed="false"><span class="engine-no">04 / BOXER SIX</span><strong>GT3 FLAT-SIX <small>4.0L · 9,000 RPM</small></strong><span class="engine-footer"><span class="type-dot"></span><span data-t="synthesized">نمذجة صوت لحظية</span><b>↗</b></span></button>
+        <button type="button" data-engine="supercharged" class="engine-card" aria-pressed="false"><span class="engine-no">05 / V8 SUPERCHARGED</span><strong>SUPERCHARGED V8 <small>6.2L · COMPRESSOR</small></strong><span class="engine-footer"><span class="type-dot"></span><span data-t="synthesized">نمذجة صوت لحظية</span><b>↗</b></span></button>
+        <button type="button" data-engine="taycan" class="engine-card special" aria-pressed="false"><span class="engine-no">06 / ELECTRIC SPORT</span><strong>ELECTRIC SPORT <small>TAYCAN-INSPIRED · ORIGINAL</small></strong><span class="engine-footer"><span class="type-dot"></span><span data-t="synthesized">نمذجة صوت لحظية</span><b>↗</b></span></button>
       </div>
 
       <div class="control-panel">
         <div class="mini-label">02 / SOUND CHARACTER</div>
         <h3 data-t="soundCharacter">تحكّم بالتجربة</h3>
-        <div class="option-header"><label for="volume" data-t="volume">مستوى الصوت</label><output id="volumeValue">25%</output></div>
-        <input id="volume" type="range" min="0" max="70" value="25" step="1">
+        <div class="option-header"><label for="volume" data-t="volume">مستوى الصوت</label><output id="volumeValue">32%</output></div>
+        <input id="volume" type="range" min="0" max="70" value="32" step="1">
         <div class="option-header"><label for="intensity" data-t="intensity">استجابة الدعسة</label><output id="intensityValue">65%</output></div>
         <input id="intensity" type="range" min="20" max="100" value="65" step="1">
+        <div class="option-header"><label for="character" data-t="character">صوت الهيدرز / طابع العادم</label><output id="characterValue">76%</output></div>
+        <input id="character" type="range" min="0" max="100" value="76" step="1">
+        <div class="option-header"><label for="crackle" data-t="crackle">فرقعة العادم عند رفع القدم</label><output id="crackleValue">34%</output></div>
+        <input id="crackle" type="range" min="0" max="100" value="34" step="1">
+        <div class="option-header"><label for="whine" data-t="whine">صفير السوبرتشارجر / الموتور</label><output id="whineValue">38%</output></div>
+        <input id="whine" type="range" min="0" max="100" value="38" step="1">
         <div class="setting-group">
           <div class="mini-label">03 / EXPERIENCE</div>
           <h3 data-t="experience">نوع التجربة</h3>
@@ -80,7 +86,7 @@
 
     <div class="right-column">
       <div class="dashboard panel">
-        <div class="dash-top"><div><span class="mini-label">ACTIVE SOUND PROFILE</span><h2 id="currentEngine">MASERATI GRANTURISMO S</h2><p id="profileSubtitle">AUTHENTIC V8 RECORDING</p></div><div id="engineStatus" class="engine-status" data-state="off"><span></span><b id="engineStatusText" data-t="off">متوقف</b></div></div>
+        <div class="dash-top"><div><span class="mini-label">ACTIVE SOUND PROFILE</span><h2 id="currentEngine">MUSCLE V8</h2><p id="profileSubtitle">6.2L CROSSPLANE · DUAL OPEN HEADERS</p></div><div id="engineStatus" class="engine-status" data-state="off"><span></span><b id="engineStatusText" data-t="off">متوقف</b></div></div>
         <div class="gauge-zone">
           <div class="gauge-wrap">
             <svg class="gauge-art" viewBox="0 0 320 320" role="img" aria-label="Virtual RPM dial">
@@ -98,28 +104,32 @@
           </div>
         </div>
         <div class="feedback-row"><span id="gpsQuality" class="source-chip">PARK • DEMO</span><span id="feedback" role="status" aria-live="polite" data-t="ready">اختر محركاً واضغط تشغيل.</span></div>
-        <button id="startButton" type="button" class="start-button"><span id="startSymbol">▶</span><strong id="startLabel" data-t="start">تشغيل الصوت الحقيقي</strong></button>
+        <button id="startButton" type="button" class="start-button"><span id="startSymbol">▶</span><strong id="startLabel" data-t="start">تشغيل صوت المحرك</strong></button>
         <div id="demoPedals" class="demo-pedals rev-pedals">
           <button id="brakePedal" class="pedal brake" type="button" hidden disabled><span class="pedal-mark">▤</span><strong data-t="brake">فرامل</strong><small data-t="hold">اضغط باستمرار</small></button>
           <button id="gasPedal" class="pedal gas" type="button" disabled><span class="pedal-mark">▥</span><strong data-t="revPedal">ارفع RPM</strong><small data-t="hold">اضغط باستمرار</small></button>
         </div>
+        <button type="button" id="demoRunButton" class="demo-run"><span>▶</span><strong data-t="demoRun">استمع لتجربة قيادة تلقائية</strong><small>22s / PREVIEW</small></button>
         <p id="gpsNotice" class="status-warning" hidden data-t="gpsNotice">GPS يعرض تقديراً للسرعة، وليس قراءة دعسة السيارة.</p>
         <div class="source-panel">
-          <div class="source-title"><span class="mini-label">AUDIO SOURCE</span><span id="sourcePill">CC BY 4.0</span></div>
-          <p id="sourceDescription" data-t="remoteSource">تسجيل حقيقي من مكتبة Wikimedia Commons.</p>
-          <a id="creditLink" href="https://commons.wikimedia.org/wiki/File:Maserati_GranTurismo_S_Exhaust.ogg" target="_blank" rel="noopener noreferrer" data-t="sourceLink">المصدر والترخيص ↗</a>
-          <div class="upload-line"><label class="upload-button" for="soundFile" data-t="importAudio">استيراد ملف صوت خاص</label><input type="file" id="soundFile" accept=".mp3,.wav,.ogg,.m4a,audio/*"><small id="fileLabel" data-t="fileHint">ملف صوت لديك حق استخدامه، حتى 25MB.</small></div>
-          <a id="taycanOfficial" href="https://newsroom.porsche.com/en_US/2022/products/porsche-sound-of-the-taycan-christophorus-402-27910.html" target="_blank" rel="noopener noreferrer" hidden data-t="taycanOfficial">اسمع مثال Taycan الرسمي من موقع Porsche ↗</a>
+          <div class="source-title"><span class="mini-label">LIVE SOUND ENGINE / DSP</span><span id="sourcePill">NO LOOPS</span></div>
+          <p id="sourceDescription" data-t="sourceDescription">نموذج صوتي مستقل يحاكي نبضات اشتعال الأسطوانات، رنين الهيدرز، العادم وسحب الهواء، مع تغيير استجابة الصوت حسب RPM.</p>
+          <p id="audioDevice" class="engine-tech" role="status" aria-live="polite">WEB AUDIO · READY</p>
+          <p data-t="realismNote">المحاكاة من تصميمنا وليست نسخة من أصوات الشركات الأصلية أو من كود TeslaSound.io.</p>
         </div>
       </div>
     </div>
   </section>
-  <section class="features-row" aria-label="Audio features"><article><span>01 /</span><strong data-t="feature1">تسجيلات حقيقية</strong><p data-t="feature1Desc">أصوات سيارات أصلية منشورة بتراخيص مفتوحة؛ لا موجات إلكترونية اصطناعية.</p></article><article><span>02 /</span><strong data-t="feature2">الصوت يستجيب</strong><p data-t="feature2Desc">سرعة التشغيل وطبقة الصوت تتبدل مع الدعسة الافتراضية أو سرعة GPS، وليس مع دعسة السيارة الحقيقية.</p></article><article><span>03 /</span><strong data-t="feature3">صوت خارجي؟</strong><p data-t="feature3Desc">Boombox قد يشغّل الوسائط خارج السيارة على P إن كانت مزوّدة بـPWS. التطبيق لا يتحكم به مباشرةً.</p></article></section>
-  <details class="safety-details"><summary data-t="externalTitle">كيف أجرّب السماعة الخارجية؟</summary><p data-t="externalSteps">السيارة على P: افتح Toybox ثم Boombox، وإذا كان الخيار متوفراً اختر Play Current Media. شغّل الصوت من التطبيق واختبر إن كان متصفح السيارة يُعتبر المصدر الحالي. إذا لم يعمل، فلا يمكن لتطبيق الويب توجيه الصوت للسماعة الخارجية بنفسه. أثناء القيادة لا تحاول تجاوز نظام تحذير المشاة.</p></details>
-  <details class="safety-details"><summary data-t="licenseTitle">مصادر الأصوات والتراخيص</summary><div id="creditsList" class="credits-list"></div></details>
-  <p class="safety"><span>!</span><span data-t="safety">هذه تجربة صوتية ترفيهية غير تابعة لأي شركة سيارات. جهّزها والسيارة على P ولا تستخدم الشاشة أثناء القيادة. الصوت يُشغّل على نظام الوسائط فقط، ولا يتحكم بتسارع السيارة أو سماعة التحذير الخارجية. التسجيلات قد تحتوي أصوات جمهور أو ضجيج محيط، وليست ملفات تشغيل OEM متعددة السرعات.</span></p>
+  <section class="features-row" aria-label="Physics features">
+    <article><span>01 /</span><strong data-t="feature1">أصوات مبنية من نبضات محرك</strong><p data-t="feature1Desc">نموذج اشتعال 4 أشواط، ترتيب الأسطوانات، ضغط العادم ورنين مواسير الهيدرز.</p></article>
+    <article><span>02 /</span><strong data-t="feature2">دعسة وغيارات واستجابة</strong><p data-t="feature2Desc">ارتفاع RPM، نقلات افتراضية، صوت سحب الهواء وفرقعات رفع القدم.</p></article>
+    <article><span>03 /</span><strong data-t="feature3">خصوصية واستخدام آمن</strong><p data-t="feature3Desc">بدون تسجيلات أو اشتراكات؛ GPS يبقى داخل المتصفح ولا يوجد أي تحكم بالسيارة.</p></article>
+  </section>
+  <details class="safety-details"><summary data-t="physicsTitle">كيف يعمل محرك الصوت الجديد؟</summary><p data-t="physicsBody">الصوت يتولد مباشرة في متصفحك باستخدام Web Audio، بنبضات كل أسطوانة ومرنانات عادم منفصلة وصوت سحب هواء، مع اختلاف خصائص V8 وV10 وV12 وFlat-6 والموتور الكهربائي. هذا نموذج أصلي مستوحى من مبادئ الصوتيات وليس إعادة إنتاج حرفية لأي صوت مصنع.</p></details>
+  <details class="safety-details"><summary data-t="externalTitle">هل يشتغل على سماعة تسلا الخارجية؟</summary><p data-t="externalSteps">المتصفح يخرج الصوت عبر سماعات المقصورة. سماعة PWS الخارجية غير قابلة للاختيار من تطبيق الويب. بعض السيارات تسمح بخيار Boombox / Play Current Media على وضع P فقط، ولكن تشغيل صوت المتصفح بهذه الطريقة غير مضمون. لا تحاول تجاوز أصوات تحذير المشاة أثناء القيادة.</p></details>
+  <p class="safety"><span>!</span><span data-t="safety">هذه تجربة صوتية ترفيهية غير تابعة لأي شركة سيارات. جهّزها والسيارة على P ولا تستخدم الشاشة أثناء القيادة. الصوت يُشغّل على نظام الوسائط فقط، ولا يتحكم بتسارع السيارة أو سماعة التحذير الخارجية. الصوت محاكاة برمجية مستقلة، وليس صوت المصنع الأصلي. أبقِ المستوى منخفضاً لتسمع تنبيهات الطريق.</span></p>
 </main>
-<footer><span>HIJJAWI X / TESLA SOUND X STUDIO</span><span>© 2026 • ENGINE AUDIO EXPERIMENT</span></footer>
-<script defer src="./app.js?v=studio-v2"></script>
+<footer><span>HIJJAWI X / TESLA SOUND X PHYSICS V3</span><span>© 2026 • ENGINE AUDIO EXPERIMENT</span></footer>
+<script type="module" src="./app.js?v=physics-v3"></script>
 </body>
 </html>

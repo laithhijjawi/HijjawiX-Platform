@@ -41,3 +41,19 @@ footer{width:min(1260px,calc(100% - 50px));margin:auto;display:flex;align-items:
 
 /* Keep atmospheric decoration from creating a horizontal scroll area on Tesla/mobile. */
 @media(max-width:720px){.ambient{display:none!important}}
+
+/* Physics v3: responsive controls and demonstration run */
+.demo-run{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:10px;min-height:46px;background:#19242a;border:1px solid #86673e;border-radius:12px;color:#e7c798}
+.demo-run strong{font-size:12px;font-weight:900}.demo-run small{font:800 9px Manrope,sans-serif;letter-spacing:.07em;color:#adb8bd}
+.demo-run span{font-size:12px}.demo-run.running{background:#463425;color:#fce3ac}
+.engine-tech{display:inline-flex;padding:7px 12px;border:1px solid #567b68!important;border-radius:10px;background:#142c24;color:#c3efd9!important;font:800 10px Manrope,sans-serif!important;letter-spacing:.03em}
+.engine-grid button:nth-child(5) .engine-no{color:#92d7e6}
+.engine-grid button:nth-child(6) .engine-no{color:#b8b0f3}
+.control-panel input[type=range]:focus-visible{outline:2px solid #dfbb81;outline-offset:5px}
+@media(max-width:440px){
+ .demo-run{gap:6px;flex-wrap:wrap;padding:8px}
+ .demo-run strong{font-size:11px}
+ .demo-run small{font-size:9px}
+ .engine-card strong{overflow-wrap:anywhere}
+ .hero-features{justify-content:flex-start}
+}

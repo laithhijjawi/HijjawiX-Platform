@@ -43,24 +43,33 @@ test('Mobile category routes replace popups', () => {
  assert.ok(html.includes('hijjawix-mobile-20261024-v2'));
 });
 
-test('Tesla Sound X assets and portal entry exist', () => {
-  for (const file of ['public/tesla-sound/index.html','public/tesla-sound/style.css','public/tesla-sound/app.js']) {
-    assert.equal(existsSync(new URL('../'+file, import.meta.url)), true, file);
+test('Tesla Sound X ships a live DSP engine, not prerecorded audio loops', () => {
+  for (const file of ['public/tesla-sound/index.html','public/tesla-sound/style.css',
+                      'public/tesla-sound/app.js','public/tesla-sound/engine-core.js',
+                      'public/tesla-sound/engine-worklet.js']) {
+    assert.equal(existsSync(new URL('../'+file, import.meta.url)),true,file);
   }
   const html=read('public/tesla-sound/index.html');
   const js=read('public/tesla-sound/app.js');
+  const engine=read('public/tesla-sound/engine-core.js');
+  const worklet=read('public/tesla-sound/engine-worklet.js');
   const portal=read('public/app.js');
   const headers=read('public/_headers');
-  for (const id of ['startButton','gasPedal','brakePedal','gpsMode','demoMode','rpmNumber','languageButton']) assert.ok(html.includes('id="'+id+'"'),id);
-  for (const profile of ['v8','v10','v12','flat6','electric','taycan']) assert.ok(js.includes(profile+':{'), profile);
+  for(const id of ['startButton','gasPedal','brakePedal','gpsMode','demoMode','rpmNumber',
+                   'languageButton','character','crackle','whine','demoRunButton']) {
+    assert.ok(html.includes('id="'+id+'"'),id);
+  }
+  for(const id of ['v8','v10','v12','flat6','supercharged','taycan'])
+    assert.ok(engine.includes(id+': {'),id);
+  assert.ok(js.includes('AudioWorkletNode'));
+  assert.ok(js.includes("import {ENGINE_PRESETS,EngineSynth}"));
   assert.ok(js.includes('navigator.geolocation.watchPosition'));
-  assert.ok(js.includes('new Audio()'),'Audio engine must play real recordings');
-  assert.ok(js.includes('URL.createObjectURL'),'Custom imported audio must be playable');
-  assert.ok(!js.includes('createOscillator('),'No synthetic oscillator engine should remain');
-  assert.ok(html.includes('id="soundFile"'),'Audio import must be available');
-  assert.ok(html.includes('tesla-sound-studio-v2'),'Studio version marker must exist');
-  assert.ok(headers.includes("media-src 'self' blob: https://upload.wikimedia.org"));
-  assert.ok(js.includes('Maserati_GranTurismo_S_Exhaust.ogg'));
+  assert.ok(worklet.includes("registerProcessor('hijjawix-physics-engine-v3'"));
+  assert.ok(engine.includes('this.fireFraction'));
+  assert.ok(engine.includes('ModalResonator'));
+  assert.ok(!js.includes('new Audio('),'Do not revert to a sample playback engine');
+  assert.ok(!js.includes('upload.wikimedia.org'));
+  assert.ok(html.includes('tesla-sound-physics-v3'));
   assert.ok(portal.includes("url:'/tesla-sound/'"));
   assert.ok(headers.includes('/tesla-sound/*'));
   assert.ok(headers.includes('geolocation=(self)'));
