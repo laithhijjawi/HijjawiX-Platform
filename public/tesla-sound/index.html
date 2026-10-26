@@ -34,13 +34,22 @@
           <button class="engine-card" type="button" data-engine="turbo6" aria-pressed="false"><span class="engine-icon">T6</span><span class="engine-name">TURBO INLINE-6</span><small data-t="turboDesc">صفير تيربو ونقلات</small></button>
         </div>
         <div class="setting-group">
-          <div class="setting-title"><span class="overline">02 / DRIVE SOURCE</span><h2 data-t="driveMode">طريقة المحاكاة</h2></div>
+          <div class="setting-title"><span class="overline">02 / EXPERIENCE</span><h2 data-t="experience">اختر نوع التجربة</h2></div>
+          <div class="mode-switch scenario-switch" role="group" aria-label="Experience">
+            <button id="revMode" class="mode-choice active" type="button" aria-pressed="true"><strong data-t="rev">صوت المحرك بالوقوف</strong><small>PARK REV</small></button>
+            <button id="driveMode" class="mode-choice" type="button" aria-pressed="false"><strong data-t="drive">صوت المحرك بالقيادة</strong><small>DRIVE</small></button>
+          </div>
+          <p class="mode-hint" id="scenarioHint" data-t="revHint">محاكاة RPM باستخدام أزرار الشاشة والسيارة متوقفة على P. دعسة تسلا الفعلية لم تُربط بعد.</p>
+        </div>
+        <div class="setting-group" id="sourceSetting" hidden>
+          <div class="setting-title"><span class="overline">03 / INPUT SOURCE</span><h2 data-t="driveMode">مصدر التسارع</h2></div>
           <div class="mode-switch" role="group" aria-label="Driving mode">
             <button id="demoMode" class="mode-choice active" type="button" aria-pressed="true"><strong data-t="demo">تجربة الدعسة</strong><small>DEMO</small></button>
             <button id="gpsMode" class="mode-choice" type="button" aria-pressed="false"><strong data-t="gps">قيادة GPS</strong><small>LIVE SPEED</small></button>
           </div>
           <p class="mode-hint" id="modeHint" data-t="demoHint">تسارع افتراضي من أزرار الشاشة. لا يقرأ دعسة السيارة الفعلية.</p>
         </div>
+        <p class="telemetry-notice" data-t="telemetryPending">ربط الدعسة الحقيقية عبر Tesla Fleet Telemetry غير مفعل حالياً. يلزم تسجيل تطبيق Tesla وموافقة صاحب السيارة وخادم استقبال؛ هذه النسخة تجريبية فقط.</p>
         <div class="settings-bottom">
           <label class="slider-head" for="volume"><span data-t="volume">مستوى صوت المحرك</span><output id="volumeValue">30%</output></label>
           <input type="range" id="volume" min="0" max="70" value="30" step="1" aria-label="Engine volume">
