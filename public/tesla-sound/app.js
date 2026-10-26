@@ -153,7 +153,7 @@ function start(){
  if(!sourceFor(profileId)){setFeedback(profileId==='taycan'?'needTaycan':'missingAudio');return}
  if(!audio)prepareAudio();
  running=true;last=performance.now();rpm=profiles[profileId].idle;
- renderStatus();setFeedback('loadingAudio');
+ renderStatus();render();setFeedback('loadingAudio');
  try{
   const attempt=audio.play();
   if(attempt&&typeof attempt.then==='function'){
