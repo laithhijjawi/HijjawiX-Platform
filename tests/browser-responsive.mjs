@@ -102,6 +102,10 @@ try{
     const speed=Number((await page.locator('#speedNumber').textContent()).trim());
     await page.mouse.up();
     assert.ok(rpm>1000,'Park Rev should change RPM with on-screen pedal: '+rpm);
+    await page.waitForFunction(() => /AUDIO WORKLET|COMPATIBILITY AUDIO ENGINE/.test(document.querySelector('#audioDevice')?.textContent||''),{timeout:5000});
+    const audioStatus=(await page.locator('#audioDevice').textContent()).trim();
+    console.log('TESLA_AUDIO_BACKEND '+width+'px '+audioStatus);
+    assert.ok(!/(تعذر تشغيل|Web Audio could not start)/.test(await page.locator('#feedback').textContent()),'Audio start should not fail');
     assert.equal(speed,0,'Park Rev must not move virtual vehicle');
     await page.locator('#driveMode').click();
     assert.ok(await page.locator('#sourceSetting').isVisible(),'Driving source choices must show');
