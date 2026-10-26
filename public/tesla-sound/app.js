@@ -49,7 +49,7 @@ function startGPS(){if(!navigator.geolocation||!window.isSecureContext){setFeedb
 function render(){$('rpmNumber').textContent=String(Math.round(rpm/10)*10);$('speedNumber').textContent=String(Math.round(speed));$('gearDisplay').textContent=running?(scenario==='rev'?'P':'G'+gear):'N';$('throttleFill').style.width=Math.round(throttle*100)+'%';$('throttlePercent').textContent=Math.round(throttle*100)+'%';const p=presets[engine];const angle=-125+Math.min(1,rpm/p.max)*250;$('rpmNeedle').setAttribute('transform','rotate('+angle+' 160 160)')}
 function tick(time){
  if(!last)last=time;
- const dt=Math.min(.08,Math.max(.001,(time-last)/1000));last=time;
+ const dt=Math.min(.25,Math.max(.001,(time-last)/1000));last=time;
  const p=presets[engine];
  if(running){
   if(scenario==='rev'){
@@ -76,9 +76,10 @@ function tick(time){
   }
   updateAudio();
  }else{rpm=0;speed=0;throttle=0}
- render();requestAnimationFrame(tick);
+ render();
 }
 $('volume').addEventListener('input',()=>{$('volumeValue').textContent=$('volume').value+'%'});
 $('intensity').addEventListener('input',()=>{$('intensityValue').textContent=$('intensity').value+'%'});
-window.addEventListener('pagehide',()=>{releasePedals();stopGPS();disposeAudio()});translate();render();requestAnimationFrame(tick);
+const engineTimer=setInterval(()=>tick(performance.now()),50);
+window.addEventListener('pagehide',()=>{clearInterval(engineTimer);releasePedals();stopGPS();disposeAudio()});translate();render();
 })();
