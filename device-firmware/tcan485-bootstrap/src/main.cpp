@@ -5,6 +5,7 @@
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
 #include "driver/twai.h"
+#include <FastLED.h>
 
 namespace Pins {
   constexpr gpio_num_t CAN_TX = GPIO_NUM_27;
@@ -15,11 +16,12 @@ namespace Pins {
 
 namespace App {
   constexpr const char* NAME = "HIJJAWI X DEVICE";
-  constexpr const char* VERSION = "0.1.0-bootstrap";
+  constexpr const char* VERSION = "0.2.0-bootstrap";
   constexpr uint32_t SERIAL_BAUD = 115200;
   constexpr uint32_t HEARTBEAT_MS = 10000;
   constexpr uint32_t WIFI_RETRY_MS = 15000;
   constexpr const char* AP_PASSWORD = "hxdsetup123"; // Lab bootstrap only; change later per-device.
+  constexpr int RGB_PIN = 4;
 }
 
 Preferences prefs;
@@ -40,6 +42,7 @@ uint32_t lastFpsMs = 0;
 uint32_t lastWifiAttempt = 0;
 uint32_t lastHeartbeat = 0;
 bool canReady = false;
+CRGB rgb[1];
 
 static String htmlEscape(const String& in) {
   String out;
@@ -223,11 +226,17 @@ static void beginPortal() {
   server.begin();
 }
 
+static void setRgb(uint8_t r, uint8_t g, uint8_t b) {
+  rgb[0] = CRGB(r, g, b);
+  FastLED.show();
+}
+
 static void startWifi() {
   WiFi.mode(WIFI_AP_STA);
   WiFi.setSleep(false);
   apSsid = "HXD-SETUP-" + deviceId.substring(deviceId.length() - 6);
   WiFi.softAP(apSsid.c_str(), App::AP_PASSWORD);
+  setRgb(0, 30, 120); // Blue = setup AP is alive
   Serial.printf("Setup AP: %s\n", apSsid.c_str());
   Serial.printf("Setup URL: http://%s\n", WiFi.softAPIP().toString().c_str());
 }
@@ -235,7 +244,10 @@ static void startWifi() {
 static void serviceWifi() {
   const uint32_t now = millis();
   if (!wifiSsid.length()) return;
-  if (WiFi.status() == WL_CONNECTED) return;
+  if (WiFi.status() == WL_CONNECTED) {
+    setRgb(0, 110, 20); // Green = connected to configured Wi-Fi
+    return;
+  }
   if (now - lastWifiAttempt < App::WIFI_RETRY_MS && lastWifiAttempt != 0) return;
   lastWifiAttempt = now;
   Serial.printf("Connecting STA to %s ...\n", wifiSsid.c_str());
@@ -293,6 +305,9 @@ static void heartbeat() {
 
 void setup() {
   Serial.begin(App::SERIAL_BAUD);
+  FastLED.addLeds<WS2812B, App::RGB_PIN, GRB>(rgb, 1);
+  FastLED.setBrightness(45);
+  setRgb(120, 40, 0); // Amber = booting
   delay(400);
   deviceId = makeDeviceId();
   loadConfig();
