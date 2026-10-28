@@ -61,10 +61,13 @@ public class EspRomFlasher {
         listener.onStatus("Verifying flash MD5...");
         byte[] md5Resp = command(ESP_SPI_FLASH_MD5, words(0, image.length, 0, 0), 0, 12000);
         if (!verifyMd5(md5Resp, image)) throw new IOException("Flash MD5 verification failed");
-        listener.onStatus("MD5 verified. Rebooting...");
-        command(ESP_FLASH_END, words(0), 0, 3000);
+        listener.onStatus("MD5 verified. Flash write is successful.");
+        // Do not issue FLASH_END reboot from the phone flasher. Some ESP32 ROM/USB-UART
+        // combinations return ROM error 0x06 even after a fully verified flash.
+        // Espressif documents FLASH_END as optional when remaining in the loader.
+        // A manual RESET gives us a deterministic first-boot path on T-CAN485.
         listener.onProgress(100);
-        listener.onStatus("Flash complete. If the board stays in bootloader, press RESET once.");
+        listener.onStatus("FLASH SUCCESS. Press RESET once (do NOT hold BOOT) to start the new firmware.");
     }
 
     public boolean sync() throws IOException {
