@@ -22,15 +22,19 @@ jobs:
       - name: Create merged binary
         working-directory: device-firmware/tcan485-bootstrap
         run: |
-          python ~/.platformio/packages/tool-esptoolpy/esptool.py --chip esp32 merge_bin -o HXD_TCAN485_Bootstrap_v0.1_merged.bin \
+          BOOT_APP0=$(find ~/.platformio/packages/framework-arduinoespressif32 -name boot_app0.bin | head -n 1)
+          test -n "$BOOT_APP0"
+          echo "Using boot_app0: $BOOT_APP0"
+          python ~/.platformio/packages/tool-esptoolpy/esptool.py --chip esp32 merge_bin -o HXD_TCAN485_Bootstrap_v0.2_merged.bin \
             --flash_mode qio --flash_freq 40m --flash_size 4MB \
             0x1000 .pio/build/tcan485/bootloader.bin \
             0x8000 .pio/build/tcan485/partitions.bin \
+            0xe000 "$BOOT_APP0" \
             0x10000 .pio/build/tcan485/firmware.bin
-          cp .pio/build/tcan485/firmware.bin HXD_TCAN485_Bootstrap_v0.1_ota.bin
+          cp .pio/build/tcan485/firmware.bin HXD_TCAN485_Bootstrap_v0.2_ota.bin
       - uses: actions/upload-artifact@v4
         with:
-          name: HXD-TCAN485-Bootstrap-v0.1
+          name: HXD-TCAN485-Bootstrap-v0.2
           path: |
-            device-firmware/tcan485-bootstrap/HXD_TCAN485_Bootstrap_v0.1_merged.bin
-            device-firmware/tcan485-bootstrap/HXD_TCAN485_Bootstrap_v0.1_ota.bin
+            device-firmware/tcan485-bootstrap/HXD_TCAN485_Bootstrap_v0.2_merged.bin
+            device-firmware/tcan485-bootstrap/HXD_TCAN485_Bootstrap_v0.2_ota.bin
