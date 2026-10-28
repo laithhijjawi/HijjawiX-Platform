@@ -55,7 +55,7 @@ public class MainActivity extends Activity {
         ScrollView sv=new ScrollView(this);sv.setBackgroundColor(Color.rgb(7,11,16));
         LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setPadding(28,32,28,60);sv.addView(root);
         root.addView(title("HIJJAWI ESP PROGRAMMER",26,Color.WHITE));
-        root.addView(title("T-CAN485 · FACTORY FLASH v0.2",13,Color.rgb(92,153,206)));
+        root.addView(title("T-CAN485 · FACTORY FLASH v0.3",13,Color.rgb(92,153,206)));
 
         root.addView(section("1 · وصّل القطعة بالهاتف عن طريق USB-OTG"));
         usbInfo=body("Scanning USB...");root.addView(usbInfo);
