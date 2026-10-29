@@ -16,7 +16,7 @@ namespace Pins {
 
 namespace App {
   constexpr const char* NAME = "HIJJAWI X DEVICE";
-  constexpr const char* VERSION = "0.2.0-bootstrap";
+  constexpr const char* VERSION = "0.3.0-bootstrap-dio";
   constexpr uint32_t SERIAL_BAUD = 115200;
   constexpr uint32_t HEARTBEAT_MS = 10000;
   constexpr uint32_t WIFI_RETRY_MS = 15000;
