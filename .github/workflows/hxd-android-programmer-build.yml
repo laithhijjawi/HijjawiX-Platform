@@ -31,8 +31,8 @@ jobs:
           ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         run: gradle assembleDebug --stacktrace
       - name: Prepare artifact
-        run: cp tools/android-esp-programmer/app/build/outputs/apk/debug/app-debug.apk Hijjawi_ESP_Programmer_v0.3-debug.apk
+        run: cp tools/android-esp-programmer/app/build/outputs/apk/debug/app-debug.apk Hijjawi_ESP_Programmer_v0.4-debug.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: Hijjawi-ESP-Programmer-v0.3
-          path: Hijjawi_ESP_Programmer_v0.3-debug.apk
+          name: Hijjawi-ESP-Programmer-v0.4
+          path: Hijjawi_ESP_Programmer_v0.4-debug.apk
