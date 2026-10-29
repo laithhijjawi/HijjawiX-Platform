@@ -4,329 +4,165 @@
 #include <Preferences.h>
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
-#include "driver/twai.h"
+#include <ArduinoJson.h>
 #include <FastLED.h>
+#include "driver/twai.h"
 
 namespace Pins {
   constexpr gpio_num_t CAN_TX = GPIO_NUM_27;
   constexpr gpio_num_t CAN_RX = GPIO_NUM_26;
   constexpr int CAN_SPEED_MODE = 23;
   constexpr int BOOST_ENABLE = 16;
-}
-
-namespace App {
-  constexpr const char* NAME = "HIJJAWI X DEVICE";
-  constexpr const char* VERSION = "0.3.0-bootstrap-dio";
-  constexpr uint32_t SERIAL_BAUD = 115200;
-  constexpr uint32_t HEARTBEAT_MS = 10000;
-  constexpr uint32_t WIFI_RETRY_MS = 15000;
-  constexpr const char* AP_PASSWORD = "hxdsetup123"; // Lab bootstrap only; change later per-device.
   constexpr int RGB_PIN = 4;
 }
+namespace App {
+  constexpr const char* NAME = "HIJJAWI X DEVICE";
+  constexpr const char* VERSION = "0.4.0-cloud-pilot";
+  constexpr uint32_t SERIAL_BAUD = 115200;
+  constexpr uint32_t WIFI_SCAN_MS = 30000;
+  constexpr uint32_t HEARTBEAT_MS = 10000;
+  constexpr uint32_t TELEMETRY_MS = 1000;
+  constexpr const char* AP_PASSWORD = "hxdsetup123";
+  constexpr const char* SERVER_BASE = "https://ev-api.hijjawix.com/api/ev";
+  constexpr int MAX_NETWORKS = 5;
+}
+
+struct KnownNetwork { String ssid; String pass; };
+KnownNetwork nets[App::MAX_NETWORKS];
 
 Preferences prefs;
 WebServer server(80);
-
-String deviceId;
-String apSsid;
-String wifiSsid;
-String wifiPass;
-String serverUrl;
-String claimCode;
-String lastServerState = "not-configured";
-
-uint32_t rxFrames = 0;
-uint32_t lastRxFrames = 0;
-uint32_t fps = 0;
-uint32_t lastFpsMs = 0;
-uint32_t lastWifiAttempt = 0;
-uint32_t lastHeartbeat = 0;
-bool canReady = false;
 CRGB rgb[1];
 
-static String htmlEscape(const String& in) {
-  String out;
-  out.reserve(in.length() + 16);
-  for (size_t i = 0; i < in.length(); ++i) {
-    const char c = in[i];
-    if (c == '&') out += "&amp;";
-    else if (c == '<') out += "&lt;";
-    else if (c == '>') out += "&gt;";
-    else if (c == '"') out += "&quot;";
-    else out += c;
-  }
-  return out;
-}
+String deviceId, apSsid, claimCode, deviceToken;
+String serverState="not-enrolled", serverDeviceStatus="unknown";
+uint32_t lastWifiScan=0,lastHeartbeat=0,lastTelemetry=0;
+uint32_t rxFrames=0,lastRxFrames=0,fps=0,lastFpsMs=0;
+bool canReady=false;
+float packVoltage=NAN,packCurrent=NAN,soc=NAN;
 
-static String jsonEscape(const String& in) {
-  String out;
-  out.reserve(in.length() + 16);
-  for (size_t i = 0; i < in.length(); ++i) {
-    char c = in[i];
-    switch (c) {
-      case '"': out += "\\\""; break;
-      case '\\': out += "\\\\"; break;
-      case '\n': out += "\\n"; break;
-      case '\r': out += "\\r"; break;
-      case '\t': out += "\\t"; break;
-      default: out += c; break;
-    }
-  }
-  return out;
-}
+static void setRgb(uint8_t r,uint8_t g,uint8_t b){rgb[0]=CRGB(r,g,b);FastLED.show();}
+static String htmlEscape(const String& in){String o;for(char c:in){if(c=='&')o+="&amp;";else if(c=='<')o+="&lt;";else if(c=='>')o+="&gt;";else if(c=='"')o+="&quot;";else o+=c;}return o;}
+static String jsonEscape(const String& in){String o;for(char c:in){if(c=='"')o+="\\\"";else if(c=='\\')o+="\\\\";else if(c=='\n')o+="\\n";else if(c=='\r')o+="\\r";else o+=c;}return o;}
+static String makeDeviceId(){uint64_t mac=ESP.getEfuseMac();char b[32];snprintf(b,sizeof(b),"HXD-%06llX",(unsigned long long)(mac&0xFFFFFFULL));return String(b);}
+static uint32_t bitsLE(const uint8_t* d,int start,int len){uint32_t v=0;for(int i=0;i<len;i++){int bit=start+i;if(d[bit/8]&(1<<(bit%8)))v|=(1UL<<i);}return v;}
+static int32_t signExtend(uint32_t v,int bits){uint32_t m=1UL<<(bits-1);return (int32_t)((v^m)-m);}
 
-static String makeDeviceId() {
-  const uint64_t mac = ESP.getEfuseMac();
-  char buf[32];
-  snprintf(buf, sizeof(buf), "HXD-%06llX", (unsigned long long)(mac & 0xFFFFFFULL));
-  return String(buf);
-}
-
-static void loadConfig() {
-  prefs.begin("hxd", true);
-  wifiSsid = prefs.getString("ssid", "");
-  wifiPass = prefs.getString("pass", "");
-  serverUrl = prefs.getString("server", "");
-  claimCode = prefs.getString("claim", "");
+static void loadConfig(){
+  prefs.begin("hxd",true);
+  claimCode=prefs.getString("claim","");
+  deviceToken=prefs.getString("token","");
+  for(int i=0;i<App::MAX_NETWORKS;i++){String k="ssid"+String(i),p="pass"+String(i);nets[i].ssid=prefs.getString(k.c_str(),"");nets[i].pass=prefs.getString(p.c_str(),"");}
   prefs.end();
 }
-
-static void saveConfig(const String& ssid, const String& pass, const String& url, const String& claim) {
-  prefs.begin("hxd", false);
-  prefs.putString("ssid", ssid);
-  prefs.putString("pass", pass);
-  prefs.putString("server", url);
-  prefs.putString("claim", claim);
-  prefs.end();
-  wifiSsid = ssid;
-  wifiPass = pass;
-  serverUrl = url;
-  claimCode = claim;
+static void saveClaim(const String& c){prefs.begin("hxd",false);prefs.putString("claim",c);prefs.end();claimCode=c;}
+static void saveToken(const String& t){prefs.begin("hxd",false);prefs.putString("token",t);prefs.end();deviceToken=t;}
+static void clearToken(){prefs.begin("hxd",false);prefs.remove("token");prefs.end();deviceToken="";serverDeviceStatus="unknown";serverState="not-enrolled";}
+static void saveNetwork(const String& ssid,const String& pass){
+  int slot=-1;for(int i=0;i<App::MAX_NETWORKS;i++)if(nets[i].ssid==ssid){slot=i;break;}
+  if(slot<0)for(int i=0;i<App::MAX_NETWORKS;i++)if(!nets[i].ssid.length()){slot=i;break;}
+  if(slot<0)slot=App::MAX_NETWORKS-1;
+  nets[slot]={ssid,pass};prefs.begin("hxd",false);prefs.putString(("ssid"+String(slot)).c_str(),ssid);prefs.putString(("pass"+String(slot)).c_str(),pass);prefs.end();
 }
+static void eraseAll(){prefs.begin("hxd",false);prefs.clear();prefs.end();for(auto &n:nets)n={"",""};claimCode="";deviceToken="";serverState="not-enrolled";serverDeviceStatus="unknown";WiFi.disconnect(true,false);}
 
-static void eraseConfig() {
-  prefs.begin("hxd", false);
-  prefs.clear();
-  prefs.end();
-  wifiSsid = "";
-  wifiPass = "";
-  serverUrl = "";
-  claimCode = "";
-  lastServerState = "not-configured";
+static bool startCan(){
+  pinMode(Pins::BOOST_ENABLE,OUTPUT);digitalWrite(Pins::BOOST_ENABLE,HIGH);
+  pinMode(Pins::CAN_SPEED_MODE,OUTPUT);digitalWrite(Pins::CAN_SPEED_MODE,LOW);
+  twai_general_config_t g=TWAI_GENERAL_CONFIG_DEFAULT(Pins::CAN_TX,Pins::CAN_RX,TWAI_MODE_LISTEN_ONLY);g.rx_queue_len=256;g.tx_queue_len=0;
+  twai_timing_config_t t=TWAI_TIMING_CONFIG_500KBITS();twai_filter_config_t f=TWAI_FILTER_CONFIG_ACCEPT_ALL();
+  if(twai_driver_install(&g,&t,&f)!=ESP_OK)return false;if(twai_start()!=ESP_OK){twai_driver_uninstall();return false;}return true;
 }
-
-static bool startCanListenOnly() {
-  pinMode(Pins::BOOST_ENABLE, OUTPUT);
-  digitalWrite(Pins::BOOST_ENABLE, HIGH);
-
-  pinMode(Pins::CAN_SPEED_MODE, OUTPUT);
-  digitalWrite(Pins::CAN_SPEED_MODE, LOW);
-
-  twai_general_config_t g = TWAI_GENERAL_CONFIG_DEFAULT(Pins::CAN_TX, Pins::CAN_RX, TWAI_MODE_LISTEN_ONLY);
-  g.rx_queue_len = 128;
-  g.tx_queue_len = 0;
-  twai_timing_config_t t = TWAI_TIMING_CONFIG_500KBITS();
-  twai_filter_config_t f = TWAI_FILTER_CONFIG_ACCEPT_ALL();
-
-  esp_err_t err = twai_driver_install(&g, &t, &f);
-  if (err != ESP_OK) {
-    Serial.printf("TWAI install failed: %d\n", (int)err);
-    return false;
-  }
-  err = twai_start();
-  if (err != ESP_OK) {
-    Serial.printf("TWAI start failed: %d\n", (int)err);
-    twai_driver_uninstall();
-    return false;
-  }
-  uint32_t alerts = TWAI_ALERT_RX_DATA | TWAI_ALERT_RX_QUEUE_FULL | TWAI_ALERT_BUS_ERROR | TWAI_ALERT_ERR_PASS;
-  twai_reconfigure_alerts(alerts, nullptr);
-  Serial.println("CAN: 500 kbps / LISTEN ONLY / TX disabled");
-  return true;
-}
-
-static void serviceCan() {
-  if (!canReady) return;
-  twai_message_t msg;
-  while (twai_receive(&msg, 0) == ESP_OK) {
-    rxFrames++;
-  }
-
-  const uint32_t now = millis();
-  if (now - lastFpsMs >= 1000) {
-    fps = rxFrames - lastRxFrames;
-    lastRxFrames = rxFrames;
-    lastFpsMs = now;
+static void decodeFrame(const twai_message_t& m){
+  if(m.rtr)return;
+  if(m.identifier==0x132&&m.data_length_code>=4){
+    packVoltage=bitsLE(m.data,0,16)*0.01f;
+    packCurrent=signExtend(bitsLE(m.data,16,16),16)*-0.1f;
+  } else if(m.identifier==0x292&&m.data_length_code>=5){
+    soc=bitsLE(m.data,30,10)*0.1f;
   }
 }
-
-static String statusJson() {
-  String json = "{";
-  json += "\"deviceId\":\"" + jsonEscape(deviceId) + "\",";
-  json += "\"firmware\":\"" + String(App::VERSION) + "\",";
-  json += "\"apSsid\":\"" + jsonEscape(apSsid) + "\",";
-  json += "\"wifiConfigured\":" + String(wifiSsid.length() ? "true" : "false") + ",";
-  json += "\"wifiConnected\":" + String(WiFi.status() == WL_CONNECTED ? "true" : "false") + ",";
-  json += "\"wifiSsid\":\"" + jsonEscape(WiFi.status() == WL_CONNECTED ? WiFi.SSID() : wifiSsid) + "\",";
-  json += "\"stationIp\":\"" + jsonEscape(WiFi.status() == WL_CONNECTED ? WiFi.localIP().toString() : String("")) + "\",";
-  json += "\"apIp\":\"" + WiFi.softAPIP().toString() + "\",";
-  json += "\"serverConfigured\":" + String(serverUrl.length() ? "true" : "false") + ",";
-  json += "\"serverState\":\"" + jsonEscape(lastServerState) + "\",";
-  json += "\"canReady\":" + String(canReady ? "true" : "false") + ",";
-  json += "\"framesPerSecond\":" + String(fps) + ",";
-  json += "\"totalFrames\":" + String(rxFrames) + ",";
-  json += "\"freeHeap\":" + String(ESP.getFreeHeap());
-  json += "}";
-  return json;
+static void serviceCan(){
+  if(!canReady)return;twai_message_t m;while(twai_receive(&m,0)==ESP_OK){rxFrames++;decodeFrame(m);}
+  uint32_t now=millis();if(now-lastFpsMs>=1000){fps=rxFrames-lastRxFrames;lastRxFrames=rxFrames;lastFpsMs=now;}
 }
 
-static String setupPage() {
-  String h = R"HTML(<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>HIJJAWI X Device Setup</title><style>
-  :root{color-scheme:dark;--bg:#07101f;--p:#0d1a2c;--l:#223650;--t:#eef5ff;--m:#93a7bf;--a:#58a8ff}*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:radial-gradient(circle at 20% 0,#17355f55,transparent 30%),var(--bg);color:var(--t)}main{max-width:760px;margin:auto;padding:26px 16px 60px}.brand{font-weight:800;letter-spacing:.08em}.brand b{color:var(--a)}.sub{color:var(--m);font-size:12px;letter-spacing:.12em}.card{margin-top:20px;background:var(--p);border:1px solid var(--l);border-radius:20px;padding:20px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.metric{border:1px solid var(--l);border-radius:14px;padding:14px}.metric small{display:block;color:var(--m);margin-bottom:7px}.metric b{font-size:19px}label{display:grid;gap:7px;margin:14px 0;color:var(--m);font-size:13px}input{width:100%;padding:13px;border-radius:12px;border:1px solid var(--l);background:#081321;color:var(--t)}button{padding:12px 16px;border:0;border-radius:12px;font-weight:700;cursor:pointer}.primary{background:#3b8df4;color:white}.danger{background:#38171b;color:#ff8f98;border:1px solid #6b2930}.hint{color:var(--m);font-size:12px;line-height:1.7}.row{display:flex;gap:10px;flex-wrap:wrap}@media(max-width:620px){.grid{grid-template-columns:1fr}}</style></head><body><main><div class="brand">HIJJAWI <b>X</b> DEVICE</div><div class="sub">FACTORY BOOTSTRAP · v0.1</div><section class="card"><div class="grid">
-  )HTML";
-  h += "<div class='metric'><small>Device ID</small><b>" + htmlEscape(deviceId) + "</b></div>";
-  h += "<div class='metric'><small>CAN</small><b>500 kbps · Listen Only</b></div>";
-  h += "<div class='metric'><small>Frames/s</small><b id='fps'>" + String(fps) + "</b></div>";
-  h += "<div class='metric'><small>Server</small><b id='srv'>" + htmlEscape(lastServerState) + "</b></div>";
-  h += R"HTML(</div></section><section class="card"><h2>إعداد Wi‑Fi والسيرفر</h2><form method="post" action="/save">
-  <label>اسم شبكة Wi‑Fi<input name="ssid" required value=")HTML";
-  h += htmlEscape(wifiSsid);
-  h += R"HTML("></label><label>كلمة مرور Wi‑Fi<input name="pass" type="password" value=")HTML";
-  h += htmlEscape(wifiPass);
-  h += R"HTML("></label><label>Server Base URL<input name="server" placeholder="https://ev-api.hijjawix.com" value=")HTML";
-  h += htmlEscape(serverUrl);
-  h += R"HTML("></label><label>Claim Code<input name="claim" autocomplete="off" value=")HTML";
-  h += htmlEscape(claimCode);
-  h += R"HTML("></label><div class="row"><button class="primary" type="submit">حفظ ومحاولة الاتصال</button></div></form>
-  <p class="hint">هذه نسخة مختبر أولية. لا توصل CAN بالسيارة قبل أن نتأكد من Wi‑Fi والبرمجة. التحقق المشفر والترخيص النهائي سيُفعّلان في نسخة الربط بالسيرفر.</p></section>
-  <section class="card"><h2>الصيانة</h2><div class="row"><form method="post" action="/erase" onsubmit="return confirm('Erase settings?')"><button class="danger">مسح الإعدادات</button></form><button onclick="location.reload()">تحديث الصفحة</button></div></section>
-<script>setInterval(async()=>{try{const s=await (await fetch('/status')).json();fps.textContent=s.framesPerSecond;srv.textContent=s.serverState}catch(e){}},1000)</script></main></body></html>)HTML";
+static int findBestKnown(){
+  int n=WiFi.scanNetworks(false,true);if(n<=0)return -1;int best=-1,bestRssi=-1000;
+  for(int i=0;i<n;i++){String s=WiFi.SSID(i);for(int k=0;k<App::MAX_NETWORKS;k++)if(nets[k].ssid.length()&&nets[k].ssid==s&&WiFi.RSSI(i)>bestRssi){best=k;bestRssi=WiFi.RSSI(i);}}
+  WiFi.scanDelete();return best;
+}
+static void connectBestKnown(){
+  int k=findBestKnown();if(k<0){serverState="waiting-for-known-wifi";setRgb(0,30,120);return;}
+  Serial.printf("Connecting to saved Wi-Fi: %s\n",nets[k].ssid.c_str());WiFi.begin(nets[k].ssid.c_str(),nets[k].pass.c_str());
+}
+static void serviceWifi(){
+  if(WiFi.status()==WL_CONNECTED)return;
+  uint32_t now=millis();if(now-lastWifiScan<App::WIFI_SCAN_MS&&lastWifiScan!=0)return;lastWifiScan=now;connectBestKnown();
+}
+
+static bool postJson(const String& path,const String& body,String& response,int& code,bool withToken){
+  if(WiFi.status()!=WL_CONNECTED){code=-1;return false;}
+  WiFiClientSecure client;client.setInsecure(); // PILOT ONLY: no OTA enabled; production will use verified TLS + signed OTA.
+  HTTPClient http;String url=String(App::SERVER_BASE)+path;if(!http.begin(client,url)){code=-2;return false;}
+  http.addHeader("Content-Type","application/json");if(withToken){http.addHeader("Authorization","Bearer "+deviceToken);http.addHeader("X-Device-Id",deviceId);}
+  code=http.POST(body);response=code>0?http.getString():"";http.end();return code>0;
+}
+static void bootstrapIfNeeded(){
+  if(deviceToken.length()||!claimCode.length()||WiFi.status()!=WL_CONNECTED)return;
+  String body="{\"deviceId\":\""+jsonEscape(deviceId)+"\",\"hardwareFamily\":\"T-CAN485\",\"hardwareRevision\":\"pilot\",\"firmware\":\""+String(App::VERSION)+"\",\"claimCode\":\""+jsonEscape(claimCode)+"\"}";
+  String resp;int code;if(!postJson("/device/bootstrap",body,resp,code,false)){serverState="bootstrap-network-error";return;}
+  JsonDocument j;if(deserializeJson(j,resp)){serverState="bootstrap-json-error";return;}
+  if(code==200&&j["deviceToken"].is<const char*>()){saveToken(String((const char*)j["deviceToken"]));serverDeviceStatus=String((const char*)(j["status"]|"pending"));serverState="enrolled-"+serverDeviceStatus;setRgb(90,0,120);}
+  else serverState="bootstrap-http-"+String(code);
+}
+static void heartbeat(){
+  if(!deviceToken.length()||WiFi.status()!=WL_CONNECTED)return;uint32_t now=millis();if(now-lastHeartbeat<App::HEARTBEAT_MS)return;lastHeartbeat=now;
+  String body="{\"firmware\":\""+String(App::VERSION)+"\",\"rssi\":"+String(WiFi.RSSI())+",\"framesPerSecond\":"+String(fps)+",\"freeHeap\":"+String(ESP.getFreeHeap())+"}";
+  String resp;int code;if(!postJson("/device/heartbeat",body,resp,code,true)){serverState="heartbeat-network-error";return;}
+  JsonDocument j;if(!deserializeJson(j,resp)&&code==200){serverDeviceStatus=String((const char*)(j["status"]|"unknown"));serverState="online-"+serverDeviceStatus;if(serverDeviceStatus=="active")setRgb(0,95,100);else setRgb(90,0,120);}
+  else if(code==401){serverState="token-rejected";setRgb(120,0,0);}else serverState="heartbeat-http-"+String(code);
+}
+static void sendTelemetry(){
+  if(serverDeviceStatus!="active"||WiFi.status()!=WL_CONNECTED||!deviceToken.length())return;uint32_t now=millis();if(now-lastTelemetry<App::TELEMETRY_MS)return;lastTelemetry=now;
+  String body="{\"framesPerSecond\":"+String(fps);
+  if(!isnan(packVoltage))body+=",\"packVoltage\":"+String(packVoltage,2);
+  if(!isnan(packCurrent))body+=",\"packCurrent\":"+String(packCurrent,1);
+  if(!isnan(soc))body+=",\"soc\":"+String(soc,1);
+  if(!isnan(packVoltage)&&!isnan(packCurrent))body+=",\"packPower\":"+String(packVoltage*packCurrent/1000.0f,2);
+  body+="}";
+  String resp;int code;postJson("/device/telemetry",body,resp,code,true);
+}
+
+static String scanOptions(){
+  int n=WiFi.scanNetworks(false,true);String h;if(n<=0)return "<option value=''>لا توجد شبكات ظاهرة</option>";
+  for(int i=0;i<n;i++){String s=WiFi.SSID(i);h+="<option value='"+htmlEscape(s)+"'>"+htmlEscape(s)+" ("+String(WiFi.RSSI(i))+" dBm)</option>";}WiFi.scanDelete();return h;
+}
+static String statusJson(){
+  String j="{\"deviceId\":\""+jsonEscape(deviceId)+"\",\"firmware\":\""+String(App::VERSION)+"\",\"wifiConnected\":"+(WiFi.status()==WL_CONNECTED?"true":"false")+",\"wifiSsid\":\""+jsonEscape(WiFi.status()==WL_CONNECTED?WiFi.SSID():String(""))+"\",\"stationIp\":\""+(WiFi.status()==WL_CONNECTED?WiFi.localIP().toString():String(""))+"\",\"serverState\":\""+jsonEscape(serverState)+"\",\"deviceStatus\":\""+jsonEscape(serverDeviceStatus)+"\",\"framesPerSecond\":"+String(fps)+",\"canMode\":\"500 kbps LISTEN ONLY\"}";return j;
+}
+static String setupPage(){
+  String h=R"HTML(<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>HXD Setup</title><style>
+:root{color-scheme:dark;--b:#07101f;--p:#0d1a2c;--l:#223650;--t:#eef5ff;--m:#93a7bf;--a:#58a8ff}*{box-sizing:border-box}body{margin:0;background:var(--b);color:var(--t);font-family:Arial}main{max-width:760px;margin:auto;padding:24px 16px 60px}.card{background:var(--p);border:1px solid var(--l);border-radius:20px;padding:18px;margin:15px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.m{border:1px solid var(--l);border-radius:13px;padding:12px}.m small{display:block;color:var(--m)}label{display:grid;gap:7px;margin:12px 0;color:var(--m)}input,select{width:100%;padding:13px;border-radius:11px;border:1px solid var(--l);background:#081321;color:white}button{padding:12px 15px;border:0;border-radius:11px;font-weight:700;background:#3189e8;color:white}.danger{background:#421a20}.hint{color:var(--m);font-size:12px;line-height:1.7}@media(max-width:600px){.grid{grid-template-columns:1fr}}</style></head><body><main><h2>HIJJAWI X DEVICE</h2><div style="color:#58a8ff">CLOUD PILOT · v0.4</div><section class="card"><div class="grid">)HTML";
+  h+="<div class='m'><small>Device ID</small><b>"+htmlEscape(deviceId)+"</b></div><div class='m'><small>CAN</small><b>500 kbps · Listen Only</b></div><div class='m'><small>Wi-Fi</small><b id='wifi'>"+htmlEscape(WiFi.status()==WL_CONNECTED?WiFi.SSID():String("Searching..."))+"</b></div><div class='m'><small>Server</small><b id='srv'>"+htmlEscape(serverState)+"</b></div></div></section>";
+  h+="<section class='card'><h3>إضافة شبكة موثوقة</h3><p class='hint'>الجهاز يبحث تلقائياً عن الشبكات المحفوظة ويختار الأقوى. اختر الشبكة من القائمة ولا تحتاج لكتابة اسمها.</p><form method='post' action='/network'><label>الشبكة<select name='ssid'>"+scanOptions()+"</select></label><label>كلمة المرور<input type='password' name='pass'></label><button>حفظ الشبكة</button></form></section>";
+  h+="<section class='card'><h3>تفعيل الجهاز على Hijjawi X</h3><form method='post' action='/claim'><label>Enrollment / Claim Code<input name='claim' value='"+htmlEscape(claimCode)+"'></label><button>حفظ وبدء التسجيل</button></form><p class='hint'>Server: "+String(App::SERVER_BASE)+"<br>بعد التسجيل سيظهر الجهاز Pending في Owner Dashboard.</p></section>";
+  h+=R"HTML(<section class="card"><button onclick="location.reload()">بحث جديد / Refresh</button> <form style="display:inline" method="post" action="/erase" onsubmit="return confirm('Erase all settings?')"><button class="danger">مسح الإعدادات</button></form></section><script>setInterval(async()=>{try{let s=await(await fetch('/status')).json();srv.textContent=s.serverState;wifi.textContent=s.wifiConnected?s.wifiSsid:'Searching...'}catch(e){}},1500)</script></main></body></html>)HTML";
   return h;
 }
-
-static void beginPortal() {
-  server.on("/", HTTP_GET, [](){ server.send(200, "text/html; charset=utf-8", setupPage()); });
-  server.on("/status", HTTP_GET, [](){ server.send(200, "application/json", statusJson()); });
-  server.on("/save", HTTP_POST, [](){
-    const String ssid = server.arg("ssid");
-    const String pass = server.arg("pass");
-    const String url = server.arg("server");
-    const String claim = server.arg("claim");
-    saveConfig(ssid, pass, url, claim);
-    server.send(200, "text/html; charset=utf-8", "<html><meta charset='utf-8'><body style='font-family:Arial;background:#07101f;color:#fff;padding:30px'><h2>تم الحفظ</h2><p>سيحاول الجهاز الاتصال بالشبكة الآن.</p><a style='color:#58a8ff' href='/'>العودة</a></body></html>");
-    WiFi.disconnect(false, false);
-    lastWifiAttempt = 0;
-  });
-  server.on("/erase", HTTP_POST, [](){
-    eraseConfig();
-    server.send(200, "text/html; charset=utf-8", "<html><meta charset='utf-8'><body style='font-family:Arial;background:#07101f;color:#fff;padding:30px'><h2>تم مسح الإعدادات</h2><p>أعد تشغيل الجهاز أو أدخل إعدادات جديدة.</p><a style='color:#58a8ff' href='/'>العودة</a></body></html>");
-    WiFi.disconnect(true, false);
-  });
-  server.onNotFound([](){ server.sendHeader("Location", "/", true); server.send(302, "text/plain", ""); });
-  server.begin();
+static void beginPortal(){
+  server.on("/",HTTP_GET,[](){server.send(200,"text/html; charset=utf-8",setupPage());});
+  server.on("/status",HTTP_GET,[](){server.send(200,"application/json",statusJson());});
+  server.on("/network",HTTP_POST,[](){String s=server.arg("ssid"),p=server.arg("pass");if(s.length())saveNetwork(s,p);server.sendHeader("Location","/",true);server.send(302);WiFi.disconnect(false,false);lastWifiScan=0;});
+  server.on("/claim",HTTP_POST,[](){saveClaim(server.arg("claim"));if(!deviceToken.length())serverState="ready-to-enroll";server.sendHeader("Location","/",true);server.send(302);});
+  server.on("/erase",HTTP_POST,[](){eraseAll();server.sendHeader("Location","/",true);server.send(302);});
+  server.onNotFound([](){server.sendHeader("Location","/",true);server.send(302);});server.begin();
 }
 
-static void setRgb(uint8_t r, uint8_t g, uint8_t b) {
-  rgb[0] = CRGB(r, g, b);
-  FastLED.show();
+void setup(){
+  Serial.begin(App::SERIAL_BAUD);FastLED.addLeds<WS2812B,Pins::RGB_PIN,GRB>(rgb,1);FastLED.setBrightness(45);setRgb(120,40,0);delay(250);
+  deviceId=makeDeviceId();loadConfig();Serial.printf("\n%s %s\nDevice: %s\n",App::NAME,App::VERSION,deviceId.c_str());
+  WiFi.mode(WIFI_AP_STA);WiFi.setSleep(false);apSsid="HXD-SETUP-"+deviceId.substring(deviceId.length()-6);WiFi.softAP(apSsid.c_str(),App::AP_PASSWORD);setRgb(0,30,120);
+  beginPortal();canReady=startCan();Serial.printf("AP: %s http://%s\n",apSsid.c_str(),WiFi.softAPIP().toString().c_str());connectBestKnown();
 }
-
-static void startWifi() {
-  WiFi.mode(WIFI_AP_STA);
-  WiFi.setSleep(false);
-  apSsid = "HXD-SETUP-" + deviceId.substring(deviceId.length() - 6);
-  WiFi.softAP(apSsid.c_str(), App::AP_PASSWORD);
-  setRgb(0, 30, 120); // Blue = setup AP is alive
-  Serial.printf("Setup AP: %s\n", apSsid.c_str());
-  Serial.printf("Setup URL: http://%s\n", WiFi.softAPIP().toString().c_str());
-}
-
-static void serviceWifi() {
-  const uint32_t now = millis();
-  if (!wifiSsid.length()) return;
-  if (WiFi.status() == WL_CONNECTED) {
-    setRgb(0, 110, 20); // Green = connected to configured Wi-Fi
-    return;
-  }
-  if (now - lastWifiAttempt < App::WIFI_RETRY_MS && lastWifiAttempt != 0) return;
-  lastWifiAttempt = now;
-  Serial.printf("Connecting STA to %s ...\n", wifiSsid.c_str());
-  WiFi.begin(wifiSsid.c_str(), wifiPass.c_str());
-}
-
-static void heartbeat() {
-  if (!serverUrl.length()) {
-    lastServerState = "not-configured";
-    return;
-  }
-  if (WiFi.status() != WL_CONNECTED) {
-    lastServerState = "wifi-offline";
-    return;
-  }
-  const uint32_t now = millis();
-  if (now - lastHeartbeat < App::HEARTBEAT_MS) return;
-  lastHeartbeat = now;
-
-  String url = serverUrl;
-  while (url.endsWith("/")) url.remove(url.length() - 1);
-  url += "/v1/device/bootstrap-heartbeat";
-
-  String body = "{";
-  body += "\"deviceId\":\"" + jsonEscape(deviceId) + "\",";
-  body += "\"firmware\":\"" + String(App::VERSION) + "\",";
-  body += "\"claimCode\":\"" + jsonEscape(claimCode) + "\",";
-  body += "\"framesPerSecond\":" + String(fps) + ",";
-  body += "\"freeHeap\":" + String(ESP.getFreeHeap());
-  body += "}";
-
-  HTTPClient http;
-  int code = -1;
-  if (url.startsWith("https://")) {
-    WiFiClientSecure client;
-    // Bootstrap alpha only. Production firmware MUST validate the server certificate
-    // with an embedded CA bundle before enrollment/authentication is enabled.
-    client.setInsecure();
-    if (http.begin(client, url)) {
-      http.addHeader("Content-Type", "application/json");
-      code = http.POST(body);
-      http.end();
-    }
-  } else {
-    WiFiClient client;
-    if (http.begin(client, url)) {
-      http.addHeader("Content-Type", "application/json");
-      code = http.POST(body);
-      http.end();
-    }
-  }
-  lastServerState = code > 0 ? ("http-" + String(code)) : ("error-" + String(code));
-  Serial.printf("Heartbeat: %s -> %s\n", url.c_str(), lastServerState.c_str());
-}
-
-void setup() {
-  Serial.begin(App::SERIAL_BAUD);
-  FastLED.addLeds<WS2812B, App::RGB_PIN, GRB>(rgb, 1);
-  FastLED.setBrightness(45);
-  setRgb(120, 40, 0); // Amber = booting
-  delay(400);
-  deviceId = makeDeviceId();
-  loadConfig();
-
-  Serial.println();
-  Serial.printf("%s %s\n", App::NAME, App::VERSION);
-  Serial.printf("Device ID: %s\n", deviceId.c_str());
-  Serial.println("Factory bootstrap: SD not required");
-  Serial.println("Safety: CAN transmit is disabled by LISTEN ONLY mode");
-
-  startWifi();
-  beginPortal();
-  canReady = startCanListenOnly();
-}
-
-void loop() {
-  server.handleClient();
-  serviceWifi();
-  serviceCan();
-  heartbeat();
-  delay(2);
-}
+void loop(){server.handleClient();serviceWifi();serviceCan();bootstrapIfNeeded();heartbeat();sendTelemetry();delay(2);}
