@@ -4,9 +4,6 @@
   "main": "src/index.js",
   "compatibility_date": "2026-10-29",
   "workers_dev": true,
-  "routes": [
-    { "pattern": "ev-api.hijjawix.com", "custom_domain": true }
-  ],
   "durable_objects": {
     "bindings": [
       { "name": "REGISTRY", "class_name": "Registry" },
