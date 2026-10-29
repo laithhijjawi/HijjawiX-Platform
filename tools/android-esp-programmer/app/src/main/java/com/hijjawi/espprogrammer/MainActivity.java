@@ -55,7 +55,7 @@ public class MainActivity extends Activity {
         ScrollView sv=new ScrollView(this);sv.setBackgroundColor(Color.rgb(7,11,16));
         LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setPadding(28,32,28,60);sv.addView(root);
         root.addView(title("HIJJAWI ESP PROGRAMMER",26,Color.WHITE));
-        root.addView(title("T-CAN485 · FACTORY FLASH v0.3",13,Color.rgb(92,153,206)));
+        root.addView(title("T-CAN485 · FACTORY FLASH / DIAGNOSTIC v0.4",13,Color.rgb(92,153,206)));
 
         root.addView(section("1 · وصّل القطعة بالهاتف عن طريق USB-OTG"));
         usbInfo=body("Scanning USB...");root.addView(usbInfo);
@@ -69,6 +69,12 @@ public class MainActivity extends Activity {
         boot.setTextColor(Color.rgb(255,190,80));root.addView(boot);
 
         flashBtn=button("FLASH ESP32 OVER USB");flashBtn.setOnClickListener(v->flashUsb());root.addView(flashBtn);
+
+        root.addView(section("3 · تشخيص الإقلاع"));
+        TextView diag=body("إذا لم تظهر شبكة HXD بعد البرمجة: اضغط READ BOOT LOG، وبعد أن يفتح المنفذ اضغط RESET على القطعة مرة واحدة بدون BOOT. سيقرأ التطبيق رسالة الإقلاع لمدة 15 ثانية.");
+        diag.setTextColor(Color.rgb(255,190,80));root.addView(diag);
+        Button bootLog=button("READ BOOT LOG / SERIAL MONITOR");
+        bootLog.setOnClickListener(v->readBootLog());root.addView(bootLog);
 
         root.addView(section("STATUS"));
         progress=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);progress.setMax(100);root.addView(progress,new LinearLayout.LayoutParams(-1,18));
@@ -100,6 +106,35 @@ public class MainActivity extends Activity {
         }catch(Exception e){append("File error: "+e.getMessage());}
     }
 
+    private void readBootLog(){
+        if(usb.findSupportedDevice()==null){toast("USB device not found");return;}
+        if(!usb.hasPermission()){usb.requestPermission();return;}
+        append("Opening serial monitor at 115200...");
+        worker.submit(()->{
+            try{
+                UsbSerialPort port=usb.open();
+                try{port.setDTR(false);port.setRTS(false);}catch(Exception ignored){}
+                append("SERIAL MONITOR OPEN. Press RESET on the T-CAN485 NOW (do not hold BOOT).");
+                long end=System.currentTimeMillis()+15000;
+                byte[] buf=new byte[1024];
+                StringBuilder line=new StringBuilder();
+                while(System.currentTimeMillis()<end){
+                    int n=port.read(buf,250);
+                    if(n<=0)continue;
+                    String t=new String(buf,0,n,java.nio.charset.StandardCharsets.UTF_8);
+                    line.append(t);
+                    if(line.length()>0){
+                        String out=line.toString();
+                        line.setLength(0);
+                        appendRaw(out);
+                    }
+                }
+                append("SERIAL MONITOR FINISHED");
+            }catch(Exception e){append("SERIAL MONITOR ERROR: "+e.getMessage());}
+            finally{usb.close();}
+        });
+    }
+
     private void flashUsb(){
         if(mergedBin==null){toast("اختر merged.bin أولاً");return;}
         if(usb.findSupportedDevice()==null){toast("USB device not found");return;}
@@ -120,6 +155,7 @@ public class MainActivity extends Activity {
 
     private static byte[] readAll(InputStream in)throws Exception{try(InputStream x=in;ByteArrayOutputStream o=new ByteArrayOutputStream()){byte[] b=new byte[16384];int n;while((n=x.read(b))>0)o.write(b,0,n);return o.toByteArray();}}
     private void append(String s){runOnUiThread(()->status.setText(status.getText()+"\n"+s));}
+    private void appendRaw(String s){runOnUiThread(()->status.setText(status.getText()+s));}
     private void toast(String s){Toast.makeText(this,s,Toast.LENGTH_SHORT).show();}
     @Override protected void onDestroy(){super.onDestroy();try{unregisterReceiver(usbPermissionReceiver);}catch(Exception ignored){}usb.close();worker.shutdownNow();}
 }
