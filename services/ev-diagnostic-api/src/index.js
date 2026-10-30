@@ -20,7 +20,19 @@ function json(data, status=200, extra={}) {
     }
   });
 }
-async function body(req){ try{return await req.json();}catch{return {};} }
+async function body(req){
+  try {
+    const ct=(req.headers.get("content-type")||"").toLowerCase();
+    if(ct.includes("application/json")) return await req.json();
+    if(ct.includes("application/x-www-form-urlencoded")){
+      const text=await req.text();
+      return Object.fromEntries(new URLSearchParams(text));
+    }
+    const text=await req.text();
+    if(!text) return {};
+    try { return JSON.parse(text); } catch { return {raw:text}; }
+  } catch { return {}; }
+}
 function bearer(req){
   const h=req.headers.get("authorization")||"";
   return h.startsWith("Bearer ")?h.slice(7).trim():"";
@@ -59,8 +71,11 @@ export default {
     if(p==="/api/ev/health")return json({ok:true,service:"hijjawi-x-ev-api",version:"1.0.0"});
 
     if(p==="/api/ev/setup/owner"&&req.method==="POST"){
-      if((req.headers.get("x-setup-key")||"")!==env.OWNER_SETUP_KEY)return json({error:"Invalid setup key"},403);
-      const r=await registryJson(env,"/setup-owner",await body(req));
+      const b=await body(req);
+      const supplied=(req.headers.get("x-setup-key")||b.setupKey||"");
+      if(supplied!==env.OWNER_SETUP_KEY)return json({error:"Invalid setup key"},403);
+      delete b.setupKey;
+      const r=await registryJson(env,"/setup-owner",b);
       return json(r.data,r.status);
     }
 
