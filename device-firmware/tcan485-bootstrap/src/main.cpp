@@ -17,7 +17,7 @@ namespace Pins {
 }
 namespace App {
   constexpr const char* NAME = "HIJJAWI X DEVICE";
-  constexpr const char* VERSION = "0.5.0-cloud-pilot";
+  constexpr const char* VERSION = "0.6.0-cloud-pilot";
   constexpr uint32_t SERIAL_BAUD = 115200;
   constexpr uint32_t WIFI_SCAN_MS = 30000;
   constexpr uint32_t HEARTBEAT_MS = 10000;
@@ -135,7 +135,23 @@ static void connectBestKnown(){
   Serial.printf("Connecting to saved Wi-Fi: %s\n",nets[k].ssid.c_str());WiFi.begin(nets[k].ssid.c_str(),nets[k].pass.c_str());
 }
 static void serviceWifi(){
-  if(WiFi.status()==WL_CONNECTED)return;
+  if(WiFi.status()==WL_CONNECTED){
+    if(deviceToken.length()){
+      if(serverDeviceStatus=="active"){
+        setRgb(0,95,100); // cyan/teal = approved + online
+        serverState="online-active";
+      } else {
+        setRgb(90,0,120); // purple = enrolled, waiting for owner approval
+        if(serverDeviceStatus=="pending") serverState="online-pending-approval";
+        else if(serverState=="waiting-for-known-wifi"||serverState=="wifi-connected") serverState="online-enrolled";
+      }
+    } else {
+      setRgb(0,110,20); // green = Wi-Fi connected, not enrolled yet
+      if(claimCode.length()) serverState="wifi-connected-ready-to-enroll";
+      else serverState="wifi-connected-awaiting-claim";
+    }
+    return;
+  }
   uint32_t now=millis();if(now-lastWifiScan<App::WIFI_SCAN_MS&&lastWifiScan!=0)return;lastWifiScan=now;connectBestKnown();
 }
 
@@ -151,7 +167,7 @@ static void bootstrapIfNeeded(){
   String body="{\"deviceId\":\""+jsonEscape(deviceId)+"\",\"hardwareFamily\":\"T-CAN485\",\"hardwareRevision\":\"pilot\",\"firmware\":\""+String(App::VERSION)+"\",\"claimCode\":\""+jsonEscape(claimCode)+"\"}";
   String resp;int code;if(!postJson("/device/bootstrap",body,resp,code,false)){serverState="bootstrap-network-error";return;}
   JsonDocument j;if(deserializeJson(j,resp)){serverState="bootstrap-json-error";return;}
-  if(code==200&&j["deviceToken"].is<const char*>()){saveToken(String((const char*)j["deviceToken"]));serverDeviceStatus=String((const char*)(j["status"]|"pending"));serverState="enrolled-"+serverDeviceStatus;setRgb(90,0,120);}
+  if(code==200&&j["deviceToken"].is<const char*>()){saveToken(String((const char*)j["deviceToken"]));serverDeviceStatus=String((const char*)(j["status"]|"pending"));serverState=(serverDeviceStatus=="active"?"online-active":"online-pending-approval");setRgb(serverDeviceStatus=="active"?0:90,serverDeviceStatus=="active"?95:0,serverDeviceStatus=="active"?100:120);}
   else serverState="bootstrap-http-"+String(code);
 }
 static void heartbeat(){
@@ -187,7 +203,7 @@ static String statusJson(){
 }
 static String setupPage(){
   String h=R"HTML(<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>HXD Setup</title><style>
-:root{color-scheme:dark;--b:#07101f;--p:#0d1a2c;--l:#223650;--t:#eef5ff;--m:#93a7bf;--a:#58a8ff}*{box-sizing:border-box}body{margin:0;background:var(--b);color:var(--t);font-family:Arial}main{max-width:760px;margin:auto;padding:24px 16px 60px}.card{background:var(--p);border:1px solid var(--l);border-radius:20px;padding:18px;margin:15px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.m{border:1px solid var(--l);border-radius:13px;padding:12px}.m small{display:block;color:var(--m)}label{display:grid;gap:7px;margin:12px 0;color:var(--m)}input,select{width:100%;padding:13px;border-radius:11px;border:1px solid var(--l);background:#081321;color:white}button{padding:12px 15px;border:0;border-radius:11px;font-weight:700;background:#3189e8;color:white}.danger{background:#421a20}.hint{color:var(--m);font-size:12px;line-height:1.7}@media(max-width:600px){.grid{grid-template-columns:1fr}}</style></head><body><main><h2>HIJJAWI X DEVICE</h2><div style="color:#58a8ff">CLOUD PILOT · v0.4</div><section class="card"><div class="grid">)HTML";
+:root{color-scheme:dark;--b:#07101f;--p:#0d1a2c;--l:#223650;--t:#eef5ff;--m:#93a7bf;--a:#58a8ff}*{box-sizing:border-box}body{margin:0;background:var(--b);color:var(--t);font-family:Arial}main{max-width:760px;margin:auto;padding:24px 16px 60px}.card{background:var(--p);border:1px solid var(--l);border-radius:20px;padding:18px;margin:15px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.m{border:1px solid var(--l);border-radius:13px;padding:12px}.m small{display:block;color:var(--m)}label{display:grid;gap:7px;margin:12px 0;color:var(--m)}input,select{width:100%;padding:13px;border-radius:11px;border:1px solid var(--l);background:#081321;color:white}button{padding:12px 15px;border:0;border-radius:11px;font-weight:700;background:#3189e8;color:white}.danger{background:#421a20}.hint{color:var(--m);font-size:12px;line-height:1.7}@media(max-width:600px){.grid{grid-template-columns:1fr}}</style></head><body><main><h2>HIJJAWI X DEVICE</h2><div style="color:#58a8ff">CLOUD PILOT · v0.6</div><section class="card"><div class="grid">)HTML";
   h+="<div class='m'><small>Device ID</small><b>"+htmlEscape(deviceId)+"</b></div><div class='m'><small>CAN</small><b>500 kbps · Listen Only</b></div><div class='m'><small>Wi-Fi</small><b id='wifi'>"+htmlEscape(WiFi.status()==WL_CONNECTED?WiFi.SSID():String("Searching..."))+"</b></div><div class='m'><small>Server</small><b id='srv'>"+htmlEscape(serverState)+"</b></div></div></section>";
   h+="<section class='card'><h3>إضافة شبكة موثوقة</h3><p class='hint'>الجهاز يبحث تلقائياً عن الشبكات المحفوظة ويختار الأقوى. اختر الشبكة من القائمة ولا تحتاج لكتابة اسمها.</p><form method='post' action='/network'><label>الشبكة<select id='ssidList' name='ssid'>"+scanOptions()+"</select></label><label>كلمة المرور<input type='password' name='pass'></label><button>حفظ الشبكة</button></form></section>";
   h+="<section class='card'><h3>تفعيل الجهاز على Hijjawi X</h3><form method='post' action='/claim'><label>Enrollment / Claim Code<input name='claim' value='"+htmlEscape(claimCode)+"'></label><button>حفظ وبدء التسجيل</button></form><p class='hint'>Server: "+String(App::SERVER_BASE)+"<br>بعد التسجيل سيظهر الجهاز Pending في Owner Dashboard.</p></section>";
