@@ -15,28 +15,51 @@
   <section class="auth-card">
     <div class="pill">ONE-TIME OWNER BOOTSTRAP</div>
     <h1>إنشاء حساب المالك الأول</h1>
-    <p>تستخدم هذه الصفحة مرة واحدة فقط بعد نشر الـAPI.</p>
+    <p>تستخدم هذه الصفحة مرة واحدة فقط لإنشاء حساب OWNER الأول.</p>
 
-    <label>Owner Setup Key
-      <input id="setupKey" type="password" autocomplete="off">
-    </label>
-    <label>الاسم
-      <input id="displayName" value="Eng. Laith Hijjawi">
-    </label>
-    <label>البريد الإلكتروني
-      <input id="email" type="email" autocomplete="email">
-    </label>
-    <label>كلمة المرور (10 خانات أو أكثر)
-      <input id="password" type="password" autocomplete="new-password">
-    </label>
+    <div id="resultMsg" class="msg" style="white-space:pre-wrap;min-height:22px;margin-bottom:12px"></div>
 
-    <button id="createBtn" type="button" class="primary">CREATE OWNER</button>
-    <div id="msg" class="msg" style="white-space:pre-wrap;min-height:22px;margin-top:12px"></div>
+    <form method="POST" action="https://ev-api.hijjawix.com/api/ev/setup/owner">
+      <input type="hidden" name="locale" value="ar">
+
+      <label>Owner Setup Key
+        <input name="setupKey" type="password" autocomplete="off" required>
+      </label>
+
+      <label>الاسم
+        <input name="displayName" value="Eng. Laith Hijjawi" required>
+      </label>
+
+      <label>البريد الإلكتروني
+        <input name="email" type="email" autocomplete="email" required>
+      </label>
+
+      <label>كلمة المرور (10 خانات أو أكثر)
+        <input name="password" type="password" autocomplete="new-password" minlength="10" required>
+      </label>
+
+      <button type="submit" class="primary">CREATE OWNER</button>
+    </form>
 
     <p><a href="/ev-diagnostic/admin.html" style="color:#58a8ff">Owner Dashboard</a></p>
   </section>
 </main>
 
-<script src="/ev-diagnostic/setup.js?v=2" defer></script>
+<script>
+(() => {
+  const result = new URLSearchParams(location.search).get('result');
+  const box = document.getElementById('resultMsg');
+  if (result === 'invalid_key') {
+    box.textContent = 'Owner Setup Key غير صحيح.';
+    box.style.color = '#ffb75e';
+  } else if (result === 'error') {
+    box.textContent = 'تعذر إنشاء الحساب. راجع إعدادات الـAPI.';
+    box.style.color = '#ffb75e';
+  } else {
+    box.textContent = 'جاهز لإنشاء حساب OWNER.';
+    box.style.color = '#55d9a8';
+  }
+})();
+</script>
 </body>
 </html>
