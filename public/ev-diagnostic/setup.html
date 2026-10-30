@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Hijjawi X EV Setup</title>
   <link rel="stylesheet" href="/ev-diagnostic/styles.css">
+  <style>
+    .field-error{min-height:18px;color:#ff8f98;font-size:12px;margin-top:-6px}
+    .field-ok{color:#55d9a8}
+    .setup-status{padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#081321;margin:10px 0 14px}
+    button[disabled]{opacity:.45;cursor:not-allowed}
+  </style>
 </head>
 <body>
 <header class="topbar">
@@ -17,28 +23,32 @@
     <h1>إنشاء حساب المالك الأول</h1>
     <p>تستخدم هذه الصفحة مرة واحدة فقط لإنشاء حساب OWNER الأول.</p>
 
-    <div id="resultMsg" class="msg" style="white-space:pre-wrap;min-height:22px;margin-bottom:12px"></div>
+    <div id="resultMsg" class="msg setup-status"></div>
 
-    <form method="POST" action="https://ev-api.hijjawix.com/api/ev/setup/owner">
+    <form id="ownerForm" method="POST" action="https://ev-api.hijjawix.com/api/ev/setup/owner" novalidate>
       <input type="hidden" name="locale" value="ar">
 
       <label>Owner Setup Key
-        <input name="setupKey" type="password" autocomplete="off" required>
+        <input id="setupKey" name="setupKey" type="password" autocomplete="off">
       </label>
+      <div id="setupKeyError" class="field-error"></div>
 
       <label>الاسم
-        <input name="displayName" value="Eng. Laith Hijjawi" required>
+        <input id="displayName" name="displayName" value="Eng. Laith Hijjawi">
       </label>
+      <div id="displayNameError" class="field-error"></div>
 
       <label>البريد الإلكتروني
-        <input name="email" type="email" autocomplete="email" required>
+        <input id="email" name="email" type="email" autocomplete="email">
       </label>
+      <div id="emailError" class="field-error"></div>
 
       <label>كلمة المرور (10 خانات أو أكثر)
-        <input name="password" type="password" autocomplete="new-password" minlength="10" required>
+        <input id="password" name="password" type="password" autocomplete="new-password">
       </label>
+      <div id="passwordError" class="field-error"></div>
 
-      <button type="submit" class="primary">CREATE OWNER</button>
+      <button id="createOwnerBtn" type="submit" class="primary">CREATE OWNER</button>
     </form>
 
     <p><a href="/ev-diagnostic/admin.html" style="color:#58a8ff">Owner Dashboard</a></p>
@@ -47,18 +57,94 @@
 
 <script>
 (() => {
-  const result = new URLSearchParams(location.search).get('result');
-  const box = document.getElementById('resultMsg');
-  if (result === 'invalid_key') {
-    box.textContent = 'Owner Setup Key غير صحيح.';
-    box.style.color = '#ffb75e';
-  } else if (result === 'error') {
-    box.textContent = 'تعذر إنشاء الحساب. راجع إعدادات الـAPI.';
-    box.style.color = '#ffb75e';
+  'use strict';
+
+  const form = document.getElementById('ownerForm');
+  const setupKey = document.getElementById('setupKey');
+  const displayName = document.getElementById('displayName');
+  const email = document.getElementById('email');
+  const password = document.getElementById('password');
+  const btn = document.getElementById('createOwnerBtn');
+  const result = document.getElementById('resultMsg');
+
+  const errors = {
+    setupKey: document.getElementById('setupKeyError'),
+    displayName: document.getElementById('displayNameError'),
+    email: document.getElementById('emailError'),
+    password: document.getElementById('passwordError')
+  };
+
+  const q = new URLSearchParams(location.search).get('result');
+  if (q === 'invalid_key') {
+    result.textContent = 'Owner Setup Key غير صحيح.';
+    result.style.color = '#ff8f98';
+  } else if (q === 'error') {
+    result.textContent = 'وصل الطلب للسيرفر لكن تعذر إنشاء الحساب.';
+    result.style.color = '#ff8f98';
   } else {
-    box.textContent = 'جاهز لإنشاء حساب OWNER.';
-    box.style.color = '#55d9a8';
+    result.textContent = 'أدخل البيانات. سيظهر أي خطأ هنا مباشرة قبل الإرسال.';
+    result.style.color = '#55d9a8';
   }
+
+  function validate() {
+    let ok = true;
+
+    errors.setupKey.textContent = '';
+    errors.displayName.textContent = '';
+    errors.email.textContent = '';
+    errors.password.textContent = '';
+
+    if (!setupKey.value.trim()) {
+      errors.setupKey.textContent = 'Owner Setup Key مطلوب.';
+      ok = false;
+    }
+
+    if (!displayName.value.trim()) {
+      errors.displayName.textContent = 'الاسم مطلوب.';
+      ok = false;
+    }
+
+    const emailValue = email.value.trim().toLowerCase();
+    if (!emailValue) {
+      errors.email.textContent = 'البريد الإلكتروني مطلوب.';
+      ok = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
+      errors.email.textContent = 'صيغة البريد الإلكتروني غير صحيحة.';
+      ok = false;
+    } else if (emailValue.endsWith('@gamil.com')) {
+      errors.email.textContent = 'ملاحظة: كتبت gamil.com — هل تقصد gmail.com؟';
+      ok = false;
+    }
+
+    const len = password.value.length;
+    if (len < 10) {
+      errors.password.textContent = 'كلمة المرور الحالية ' + len + ' خانات. المطلوب 10 خانات على الأقل.';
+      ok = false;
+    }
+
+    return ok;
+  }
+
+  [setupKey, displayName, email, password].forEach(el => {
+    el.addEventListener('input', validate);
+    el.addEventListener('blur', validate);
+  });
+
+  form.addEventListener('submit', (e) => {
+    if (!validate()) {
+      e.preventDefault();
+      result.textContent = 'يوجد خطأ في البيانات. صحح الحقول المعلّمة باللون الأحمر.';
+      result.style.color = '#ff8f98';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'CREATING OWNER...';
+    result.textContent = 'البيانات صحيحة. يتم إرسال الطلب الآن إلى السيرفر...';
+    result.style.color = '#55d9a8';
+  });
+
+  validate();
 })();
 </script>
 </body>
