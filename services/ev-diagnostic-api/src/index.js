@@ -1,15 +1,22 @@
 const te = new TextEncoder();
 
+function corsHeaders(extra={}) {
+  return {
+    "access-control-allow-origin":"*",
+    "access-control-allow-headers":"content-type,authorization,x-setup-key,x-device-id",
+    "access-control-allow-methods":"GET,POST,OPTIONS",
+    "access-control-max-age":"86400",
+    ...extra
+  };
+}
 function json(data, status=200, extra={}) {
-  return new Response(JSON.stringify(data), {
+  const noBody = status === 204 || status === 205 || status === 304;
+  return new Response(noBody ? null : JSON.stringify(data), {
     status,
     headers: {
-      "content-type":"application/json; charset=utf-8",
+      ...(noBody ? {} : {"content-type":"application/json; charset=utf-8"}),
       "cache-control":"no-store",
-      "access-control-allow-origin":"*",
-      "access-control-allow-headers":"content-type,authorization,x-setup-key,x-device-id",
-      "access-control-allow-methods":"GET,POST,OPTIONS",
-      ...extra
+      ...corsHeaders(extra)
     }
   });
 }
@@ -47,7 +54,7 @@ async function requireDevice(req,env){
 
 export default {
   async fetch(req,env){
-    if(req.method==="OPTIONS")return json({},204);
+    if(req.method==="OPTIONS")return new Response(null,{status:204,headers:corsHeaders()});
     const u=new URL(req.url), p=u.pathname;
     if(p==="/api/ev/health")return json({ok:true,service:"hijjawi-x-ev-api",version:"1.0.0"});
 
