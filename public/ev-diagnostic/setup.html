@@ -1,0 +1,13 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hijjawi X EV Setup</title><link rel="stylesheet" href="/ev-diagnostic/styles.css"></head><body>
+<header class="topbar"><a class="brand" href="/"><strong>HIJJAWI <b>X</b></strong><span>EV OWNER SETUP</span></a></header>
+<main class="auth-wrap"><section class="auth-card"><div class="pill">ONE-TIME OWNER BOOTSTRAP</div><h1>إنشاء حساب المالك الأول</h1><p>تستخدم هذه الصفحة مرة واحدة فقط بعد نشر الـAPI.</p>
+<label>Owner Setup Key<input id="setupKey" type="password"></label>
+<label>الاسم<input id="displayName" value="Eng. Laith Hijjawi"></label>
+<label>البريد الإلكتروني<input id="email" type="email"></label>
+<label>كلمة المرور (10 خانات أو أكثر)<input id="password" type="password"></label>
+<button id="createBtn" class="primary">CREATE OWNER</button><div id="msg" class="msg"></div>
+<p><a href="/ev-diagnostic/admin.html" style="color:#58a8ff">Owner Dashboard</a></p></section></main>
+<script>
+const API='https://ev-api.hijjawix.com/api/ev';
+createBtn.onclick=async()=>{msg.textContent='';try{const r=await fetch(API+'/setup/owner',{method:'POST',headers:{'content-type':'application/json','x-setup-key':setupKey.value},body:JSON.stringify({displayName:displayName.value,email:email.value,password:password.value,locale:'ar'})});const j=await r.json();if(!r.ok)throw new Error(j.error||'HTTP '+r.status);msg.textContent='تم إنشاء حساب OWNER. انتقل إلى Owner Dashboard.';}catch(e){msg.textContent=e.message}};
+</script></body></html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07101f">
+<title>Hijjawi X EV Diagnostic</title>
+<link rel="stylesheet" href="/ev-diagnostic/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/"><strong>HIJJAWI <b>X</b></strong><span>EV DIAGNOSTIC</span></a>
+  <div class="actions">
+    <button id="langBtn" class="ghost">EN</button>
+    <button id="logoutBtn" class="ghost" hidden data-i18n="logout">تسجيل الخروج</button>
+  </div>
+</header>
+
+<main>
+<section id="loginView" class="auth-wrap">
+  <div class="auth-card">
+    <div class="pill">SECURE DEVICE PLATFORM</div>
+    <h1 data-i18n="signinTitle">دخول منصة التشخيص</h1>
+    <p data-i18n="signinDesc">الحسابات والأجهزة تُفعّل من إدارة Hijjawi X فقط.</p>
+    <label><span data-i18n="email">البريد الإلكتروني</span><input id="email" type="email" autocomplete="username"></label>
+    <label><span data-i18n="password">كلمة المرور</span><input id="password" type="password" autocomplete="current-password"></label>
+    <button id="loginBtn" class="primary" data-i18n="signin">تسجيل الدخول</button>
+    <div id="loginMsg" class="msg"></div>
+    <small data-i18n="noSignup">لا يوجد تسجيل عام. ربط الحساب والجهاز يتم بواسطة مدير المنصة.</small>
+  </div>
+</section>
+
+<section id="appView" hidden>
+  <div class="hero">
+    <div>
+      <div class="pill" data-i18n="teslaBattery">TESLA BATTERY · V1</div>
+      <h1 data-i18n="dashboard">لوحة تشخيص المركبة</h1>
+      <p data-i18n="dashboardDesc">واجهة واحدة للهاتف والكمبيوتر والكراج، مرتبطة بجهاز مصرح فقط.</p>
+    </div>
+    <div class="device-card">
+      <span data-i18n="device">الجهاز</span>
+      <strong id="deviceName">—</strong>
+      <small id="deviceState" data-i18n="offline">غير متصل</small>
+    </div>
+  </div>
+
+  <nav class="tabs">
+    <button class="tab active" data-page="overview" data-i18n="overview">نظرة عامة</button>
+    <button class="tab" data-page="battery" data-i18n="batteryLab">Battery Lab</button>
+    <button class="tab" data-page="modules" data-i18n="modules">الموديولات</button>
+    <button class="tab" data-page="sessions" data-i18n="sessions">الجلسات</button>
+    <button class="tab" data-page="feedback" data-i18n="feedback">المقترحات</button>
+  </nav>
+
+  <section class="page active" id="page-overview">
+    <div class="grid metrics">
+      <article><span>SOC</span><b id="soc">—</b></article>
+      <article><span data-i18n="packVoltage">Pack Voltage</span><b id="packV">—</b></article>
+      <article><span data-i18n="packCurrent">Pack Current</span><b id="packI">—</b></article>
+      <article><span>ΔV</span><b id="deltaV">—</b></article>
+      <article><span>SOH</span><b id="soh">—</b></article>
+      <article><span data-i18n="frames">CAN Frames/s</span><b id="fps">—</b></article>
+    </div>
+    <div class="grid split">
+      <article class="panel"><h2 data-i18n="hvState">HV System</h2><div id="hvState" class="statusline">—</div></article>
+      <article class="panel"><h2 data-i18n="connection">Device connection</h2><div id="connectionInfo" class="statusline">—</div></article>
+    </div>
+  </section>
+
+  <section class="page" id="page-battery"><article class="panel"><h2>Battery Lab</h2><p data-i18n="batterySoon">Live battery charts and balance-review data will appear here after the authorized device connects.</p><div id="brickChart" class="chart-empty">NO LIVE DATA</div></article></section>
+  <section class="page" id="page-modules"><article class="panel"><h2 data-i18n="modules">الموديولات</h2><div id="modulesGrid" class="modules"></div></article></section>
+  <section class="page" id="page-sessions"><article class="panel"><h2 data-i18n="sessions">الجلسات</h2><div id="sessionsList" class="empty" data-i18n="noSessions">لا توجد جلسات بعد.</div></article></section>
+  <section class="page" id="page-feedback"><article class="panel">
+    <h2 data-i18n="feedback">المقترحات</h2>
+    <label><span data-i18n="feedbackCategory">التصنيف</span><select id="feedbackCategory"><option value="feature">Feature</option><option value="bug">Bug</option><option value="vehicle">Vehicle support</option><option value="other">Other</option></select></label>
+    <label><span data-i18n="feedbackText">الملاحظة أو الاقتراح</span><textarea id="feedbackText" rows="6"></textarea></label>
+    <button id="feedbackBtn" class="primary" data-i18n="sendFeedback">إرسال</button>
+    <div id="feedbackMsg" class="msg"></div>
+  </article></section>
+</section>
+</main>
+<script src="/ev-diagnostic/app.js"></script>
+</body>
+</html>

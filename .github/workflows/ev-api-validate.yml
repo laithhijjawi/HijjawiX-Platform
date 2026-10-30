@@ -1,0 +1,18 @@
+name: Validate EV Diagnostic API
+on:
+  push:
+    paths:
+      - 'services/ev-diagnostic-api/**'
+      - '.github/workflows/ev-api-validate.yml'
+  workflow_dispatch:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - run: npm install --no-package-lock
+      - name: Wrangler dry run
+        run: npx wrangler deploy --dry-run --config services/ev-diagnostic-api/wrangler.jsonc --outdir .wrangler-ev-dry
