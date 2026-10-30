@@ -33,18 +33,19 @@
     const timer = setTimeout(() => controller.abort(), 15000);
 
     try {
+      const form = new URLSearchParams();
+      form.set('setupKey', setupKey);
+      form.set('displayName', displayName);
+      form.set('email', email);
+      form.set('password', password);
+      form.set('locale', 'ar');
+
       const r = await fetch(API + '/setup/owner', {
         method: 'POST',
         headers: {
-          'content-type': 'application/json',
-          'x-setup-key': setupKey
+          'content-type': 'application/x-www-form-urlencoded;charset=UTF-8'
         },
-        body: JSON.stringify({
-          displayName,
-          email,
-          password,
-          locale: 'ar'
-        }),
+        body: form.toString(),
         signal: controller.signal
       });
 
