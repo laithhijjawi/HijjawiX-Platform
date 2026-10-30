@@ -20,6 +20,16 @@ function json(data, status=200, extra={}) {
     }
   });
 }
+function redirect303(url) {
+  return new Response(null, {
+    status: 303,
+    headers: {
+      "location": url,
+      "cache-control": "no-store",
+      ...corsHeaders()
+    }
+  });
+}
 async function body(req){
   try {
     const ct=(req.headers.get("content-type")||"").toLowerCase();
@@ -72,10 +82,20 @@ export default {
 
     if(p==="/api/ev/setup/owner"&&req.method==="POST"){
       const b=await body(req);
+      const isBrowserForm=(req.headers.get("content-type")||"").toLowerCase().includes("application/x-www-form-urlencoded");
       const supplied=(req.headers.get("x-setup-key")||b.setupKey||"");
-      if(supplied!==env.OWNER_SETUP_KEY)return json({error:"Invalid setup key"},403);
+      if(supplied!==env.OWNER_SETUP_KEY){
+        return isBrowserForm
+          ? redirect303("https://hijjawix.com/ev-diagnostic/setup.html?result=invalid_key")
+          : json({error:"Invalid setup key"},403);
+      }
       delete b.setupKey;
       const r=await registryJson(env,"/setup-owner",b);
+      if(isBrowserForm){
+        if(r.ok) return redirect303("https://hijjawix.com/ev-diagnostic/admin.html?owner=created");
+        if(r.status===409) return redirect303("https://hijjawix.com/ev-diagnostic/admin.html?owner=exists");
+        return redirect303("https://hijjawix.com/ev-diagnostic/setup.html?result=error");
+      }
       return json(r.data,r.status);
     }
 
