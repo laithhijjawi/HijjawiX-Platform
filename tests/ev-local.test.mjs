@@ -17,7 +17,7 @@ test('SLCAN classic standard/extended frames parse and reject malformed payload'
  let f=parseSlcanLine('t12321122');
  assert.equal(f.id,0x123);assert.deepEqual(f.data,[0x11,0x22]);
  f=parseSlcanLine('T1ABCDEF1280FF');
- assert.equal(f.id,0x1ABCDEF1);assert.equal(f.extended,true);assert.deepEqual(f.data,[0x80]);
+ assert.equal(f.id,0x1ABCDEF1);assert.equal(f.extended,true);assert.deepEqual(f.data,[0x80,0xFF]);
  assert.equal(parseSlcanLine('t12331122'),null);
  assert.equal(parseSlcanLine('tFFF100'),null);
  assert.equal(parseSlcanLine('S6'),null);
