@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#06101d"><title>Hijjawi X | Local CAN Diagnostic</title>
+<link rel="stylesheet" href="/ev-diagnostic/styles.css"><link rel="stylesheet" href="/ev-diagnostic/local.css">
+</head>
+<body>
+<header class="topbar"><a class="brand" href="/"><strong>HIJJAWI <b>X</b></strong><span>EV DIAGNOSTIC LAB</span></a><div class="actions"><a class="ghost link-btn" href="/ev-diagnostic/" data-i18n="cloud">Cloud</a><button id="language" class="ghost">EN</button></div></header>
+<main class="local-wrap">
+<section class="local-heading"><div><span class="pill">USB CAN · READ ONLY · BETA</span><h1 data-i18n="title">فحص بطاريات السيارات الكهربائية</h1><p data-i18n="subtitle">راقب رسائل CAN الحقيقية وسجلها، واعرض قراءات الخلايا فقط عند توفير تعريف BMS موثّق.</p></div><div class="connection-indicator"><span id="light" class="indicator"></span><strong id="connectionStatus" data-i18n="disconnected">غير متصل</strong><small id="frameRate">0 frames/s</small></div></section>
+<section class="local-layout">
+<article class="panel controls"><h2 data-i18n="connection">الاتصال بالجهاز</h2>
+<label><span data-i18n="adapter">نوع الاتصال</span><select id="mode"><option value="serial" data-i18n="modeUsb">MKS CANable · USB Serial (SLCAN)</option><option value="demo" data-i18n="modeDemo">تجربة الواجهة (بيانات محاكاة)</option></select></label>
+<div class="two"><label><span data-i18n="usbSpeed">سرعة USB Serial</span><select id="serialBaud"><option>115200</option><option>230400</option><option>460800</option><option>57600</option><option>9600</option></select></label><label><span data-i18n="canSpeed">سرعة CAN</span><select id="canBaud"><option value="500000">500 kbps</option><option value="250000">250 kbps</option><option value="125000">125 kbps</option><option value="1000000">1 Mbps</option></select></label></div>
+<label class="checkline"><input type="checkbox" id="passive" checked disabled><span data-i18n="passive">وضع استقبال فقط (لا أوامر تشخيص أو كتابة)</span></label>
+<div class="button-row"><button class="primary" id="connect" data-i18n="connect">اتصال USB</button><button class="ghost" id="disconnect" disabled data-i18n="disconnect">فصل</button><button class="ghost" id="clear" data-i18n="clear">مسح القراءات</button></div>
+<div class="callout" id="supportMessage" role="status"></div><p class="muted" data-i18n="compatibility">يشترط أن تكون القطعة تعمل ببرنامج SLCAN وتظهر كمنفذ Serial. Firmware من نوع candleLight/gs_usb يحتاج جسراً مختلفاً. لا تغيّر Firmware قبل تحديد النوع.</p>
+</article>
+<article class="panel controls"><h2 data-i18n="vehicle">ملف تعريف البطارية</h2>
+<label><span data-i18n="brand">الشركة</span><select id="brand"><option value="tesla">Tesla</option><option value="byd">BYD</option><option value="hyundai">Hyundai / Kia</option><option value="other" data-i18n="other">أخرى</option></select></label>
+<label><span data-i18n="profile">تعريف إشارات CAN</span><select id="profileMode"><option value="none" data-i18n="noProfile">بدون تعريف — CAN خام فقط</option><option value="file" data-i18n="profileFile">ملف JSON موثّق (قراءة محلية)</option></select></label>
+<label id="profileFileLabel" hidden><span data-i18n="chooseProfile">اختر ملف JSON</span><input type="file" id="profileFile" accept=".json,application/json"></label>
+<div class="pill subtle" id="profileStatus" data-i18n="undecoded">لم يتم تحميل تعريف خلايا موثّق</div><p class="muted" data-i18n="profileNote">لا يجوز استنتاج مواقع الخلايا من CAN ID فقط. الملف يجب أن يكون مطابقاً لطراز السيارة وسنة الصنع ونوع البطارية.</p>
+<a class="info-link" href="https://github.com/laithhijjawi/HijjawiX-Platform/blob/main/docs/ev-diagnostic-architecture.md" target="_blank" rel="noopener" data-i18n="architecture">تفاصيل بنية الفحص</a>
+</article></section>
+<section class="stats-grid"><article class="metric"><span data-i18n="frames">عدد الرسائل</span><strong id="totalFrames">0</strong></article><article class="metric"><span data-i18n="unique">معرفات CAN</span><strong id="uniqueIds">0</strong></article><article class="metric"><span data-i18n="cellCount">الخلايا المقروءة</span><strong id="cellCount">—</strong></article><article class="metric"><span data-i18n="voltageDelta">فرق أعلى وأقل خلية</span><strong id="cellDelta">—</strong></article><article class="metric"><span data-i18n="soc">SOC</span><strong id="soc">—</strong></article><article class="metric"><span data-i18n="packVoltage">جهد الحزمة</span><strong id="packVoltage">—</strong></article></section>
+<section class="panel"><div class="heading-row"><div><h2 data-i18n="cells">خلايا البطارية</h2><p class="muted" id="cellsNotice" data-i18n="cellsNotice">لا توجد قراءات خلايا موثّقة بعد. اتصال CAN وحده لا يكفي.</p></div><span class="pill subtle" id="dataSource" data-i18n="noData">لا بيانات</span></div><div id="cells" class="cells-grid"><div class="empty-local" data-i18n="emptyCells">ستظهر الخلايا هنا فور وصول قراءات موثّقة من ملف تعريف متوافق.</div></div></section>
+<section class="panel"><div class="heading-row"><h2 data-i18n="rawFrames">مراقبة رسائل CAN</h2><div class="button-row"><button class="ghost" id="exportFrames" data-i18n="exportCsv">تصدير CSV</button><button class="ghost" id="exportCells" data-i18n="exportCells">تصدير الخلايا</button></div></div>
+<div class="table-scroll"><table class="can-table"><thead><tr><th data-i18n="time">الوقت</th><th>CAN ID</th><th>Type</th><th>DLC</th><th>DATA HEX</th></tr></thead><tbody id="framesBody"><tr><td colspan="5" class="muted" data-i18n="waiting">بانتظار الرسائل...</td></tr></tbody></table></div><p class="muted" data-i18n="storage">البيانات داخل المتصفح محلياً ولا تُرفع إلى السحابة. يُحتفظ بآخر 10,000 رسالة في الذاكرة.</p>
+</section>
+<footer class="local-footer"><span data-i18n="safety">للاختبار المبدئي فقط: فحص استقبال دون إرسال رسائل CAN. لا توصل أسلاكاً غير مؤكدة أو خط الجهد العالي.</span><a href="/" data-i18n="home">العودة للمنصة</a></footer>
+</main>
+<script type="module" src="/ev-diagnostic/local.js"></script>
+</body></html>
